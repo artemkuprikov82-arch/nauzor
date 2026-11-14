@@ -43,12 +43,12 @@ textarea{font-family:monospace;resize:vertical}
 
 <div id="app" style="display:none">
   <div class="nav">
-    <button type="button" class="btn" onclick="tab(1)">📄 Документ</button>
-    <button type="button" class="btn btn-g" onclick="tab(2);loadRegistry()">🗂️ Реестр дел</button>
-    <button type="button" class="btn btn-g" onclick="tab(3)">📅 Проверки</button>
-    <button type="button" class="btn btn-g" onclick="tab(4)">🚨 Розыск</button>
-    <button type="button" class="btn btn-g" onclick="tab(5)">📖 Статьи УК</button>
-    <button type="button" class="btn btn-g" onclick="tab(6)">👥 Контакты</button>
+    <button type="button" class="btn" id="navBtn1" onclick="tab(1)">📄 Документ</button>
+    <button type="button" class="btn btn-g" id="navBtn2" onclick="tab(2);loadRegistry()">🗂️ Реестр дел</button>
+    <button type="button" class="btn btn-g" id="navBtn3" onclick="tab(3)">📅 Проверки</button>
+    <button type="button" class="btn btn-g" id="navBtn4" onclick="tab(4)">🚨 Розыск</button>
+    <button type="button" class="btn btn-g" id="navBtn5" onclick="tab(5)">📖 Статьи УК</button>
+    <button type="button" class="btn btn-g" id="navBtn6" onclick="tab(6)">👥 Контакты</button>
   </div>
 
   <div class="box">
@@ -66,10 +66,7 @@ textarea{font-family:monospace;resize:vertical}
         <input type="text" id="dTarget" placeholder="Фигурант (ФИО, звание)">
         <input type="text" id="dLaw" placeholder="Статья (напр. ст. 286 УК)">
         <textarea id="dText" rows="4" placeholder="Суть нарушения..."></textarea>
-        <select id="dSign">
-          <option value="Зинченко А.А.">Зинченко А.А. (Прокурор)</option>
-          <option value="Зинченко Е.В.">Зинченко Е.В. (Заместитель)</option>
-        </select>
+        <select id="dSign"></select>
         <select id="dStatus">
           <option value="В работе">В работе</option>
           <option value="Выдан ордер">Выдан ордер</option>
@@ -79,7 +76,7 @@ textarea{font-family:monospace;resize:vertical}
         <button type="button" class="btn" onclick="makeDoc()">Сформировать, отправить в базу</button>
         <p>
           <span id="sendSt" class="ok" style="display:none">Отправлено в облачную базу</span>
-          <span id="sendErr" class="err" style="display:none">Ошибка отправки — см. шаги ниже</span>
+          <span id="sendErr" class="err" style="display:none">Ошибка отправки</span>
         </p>
       </div>
 
@@ -156,29 +153,41 @@ textarea{font-family:monospace;resize:vertical}
 var SHEET_URL = "https://script.google.com/macros/s/AKfycbyimsRaFpV9RtHKrRNtUwFt8BoPgainPLbC6Z-oj563xKHt53Yzcj6PyJaRQqvPw2rp/exec";
 var STATUSES = ['В работе', 'Выдан ордер', 'В суде', 'Закрыто'];
 
-// Сотрудники: вход строго по «Фамилия И.О.», полному ФИО или должности
+// Текущий пользователь
+var currentUser = null;
+
+// perms:
+//   tabs       — какие разделы видны (1 документ, 2 реестр, 3 проверки, 4 розыск, 5 статьи, 6 контакты)
+//   editStatus — может менять статус дел в реестре
+//   signAny    — может подписывать документы любой подписью (иначе — только своя)
 var STAFF = [
   {
     pass: "7401",
     role: "Генеральный прокурор",
     fio: "Зинченко Артём Анатольевич",
-    names: ["генеральный прокурор", "зинченко а.а.", "зинченко артем анатольевич", "зинченко артём анатольевич"]
+    short: "Зинченко А.А.",
+    names: ["генеральный прокурор", "зинченко а.а.", "зинченко артем анатольевич", "зинченко артём анатольевич"],
+    perms: { tabs: [1, 2, 3, 4, 5, 6], editStatus: true, signAny: true }
   },
   {
     pass: "7402",
     role: "Заместитель генерального прокурора",
     fio: "Зинченко Елизавета Витальевна",
-    names: ["заместитель генерального прокурора", "зинченко е.в.", "зинченко елизавета витальевна"]
+    short: "Зинченко Е.В.",
+    names: ["заместитель генерального прокурора", "зинченко е.в.", "зинченко елизавета витальевна"],
+    perms: { tabs: [1, 2, 3, 4, 5, 6], editStatus: true, signAny: true }
   },
   {
     pass: "7403",
     role: "Старший помощник прокурора",
     fio: "Зинченко Василиса Витальевна",
-    names: ["старший помощник прокурора", "зинченко в.в.", "зинченко василиса витальевна"]
+    short: "Зинченко В.В.",
+    names: ["старший помощник прокурора", "зинченко в.в.", "зинченко василиса витальевна"],
+    perms: { tabs: [1, 2, 3, 5, 6], editStatus: true, signAny: false }
   }
 ];
 
-// Приводим строку к единому виду: без регистра, без ё, без лишних пробелов и точек
+// Приводим строку к единому виду: без регистра, без ё, без точек и лишних пробелов
 function norm(s) {
   return s.toLowerCase().replace(/ё/g, 'е').replace(/\./g, '').replace(/\s+/g, ' ').trim();
 }
@@ -195,17 +204,62 @@ function findStaff(nameInput, pass) {
   return null;
 }
 
+// Настраиваем интерфейс под роль
+function applyPermissions(user) {
+  for (var i = 1; i <= 6; i++) {
+    document.getElementById('navBtn' + i).style.display =
+      (user.perms.tabs.indexOf(i) !== -1) ? '' : 'none';
+  }
+
+  var sel = document.getElementById('dSign');
+  sel.innerHTML = '';
+  if (user.perms.signAny) {
+    for (var k = 0; k < STAFF.length; k++) {
+      var o = document.createElement('option');
+      o.value = STAFF[k].short;
+      o.text = STAFF[k].short + ' (' + STAFF[k].role + ')';
+      sel.add(o);
+    }
+  } else {
+    var me = document.createElement('option');
+    me.value = user.short;
+    me.text = user.short + ' (' + user.role + ')';
+    sel.add(me);
+  }
+}
+
+// Автоматически ставим подпись вошедшего сотрудника
+function selectOwnSign(user) {
+  var sel = document.getElementById('dSign');
+  for (var i = 0; i < sel.options.length; i++) {
+    if (norm(sel.options[i].value) === norm(user.short)) {
+      sel.selectedIndex = i;
+      return;
+    }
+  }
+  // если своей подписи в списке нет — добавляем и выбираем её
+  var o = document.createElement('option');
+  o.value = user.short;
+  o.text = user.short + ' (' + user.role + ')';
+  sel.appendChild(o);
+  sel.selectedIndex = sel.options.length - 1;
+}
+
 function login() {
   var name = document.getElementById('uName').value;
   var pass = document.getElementById('uPass').value.trim();
   var user = findStaff(name, pass);
 
   if (user) {
+    currentUser = user;
     document.getElementById('loginBox').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('welcomeMsg').innerText = 'Добро пожаловать: ' + user.role + ' ' + user.fio;
+    applyPermissions(user);
+    selectOwnSign(user);
     newCaseNumber();
     loadRegistry();
+    tab(1);
   } else {
     document.getElementById('err').style.display = 'block';
   }
@@ -313,9 +367,14 @@ function loadRegistry() {
           if (STATUSES[i] === c.status) { o.selected = true; }
           sel.add(o);
         }
-        sel.addEventListener('change', function () {
-          updateStatus(c.num, sel.value);
-        });
+        if (currentUser && !currentUser.perms.editStatus) {
+          sel.disabled = true;
+          sel.title = 'Изменение статуса недоступно вашей роли';
+        } else {
+          sel.addEventListener('change', function () {
+            updateStatus(c.num, sel.value);
+          });
+        }
         r.insertCell(4).appendChild(sel);
         var tdText = r.insertCell(5);
         tdText.innerText = c.text;
