@@ -1,419 +1,116 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>АИС «Надзор»</title>
-<style>
-*{box-sizing:border-box}
-body{font-family:Arial,sans-serif;margin:0;background:#0f172a;color:#fff}
-.box{max-width:950px;margin:15px auto;padding:0 15px}
-.card{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:14px}
-h2,h3{color:#eab308;margin-top:0}
-input,select,textarea{width:100%;background:#0f172a;border:1px solid #475569;color:#fff;padding:9px;border-radius:5px;font-size:14px;min-height:36px;margin:4px 0 10px;text-align:left}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#eab308}
-.btn{background:#eab308;color:#000;border:none;padding:8px 13px;border-radius:5px;font-weight:bold;cursor:pointer;font-size:13px;width:100%}
-.btn:hover{opacity:.9}
-.btn-b{background:#3b82f6;color:#fff;width:auto}
-.btn-g{background:#334155;color:#fff;width:auto}
-.nav{background:#1e293b;padding:10px 15px;border-bottom:2px solid #eab308;display:flex;gap:6px;flex-wrap:wrap}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{border:1px solid #334155;padding:7px;text-align:left}
-th{background:#0f172a;color:#eab308}
-td select{margin:0;padding:3px;min-height:auto}
-textarea{font-family:monospace;resize:vertical}
-.muted{color:#94a3b8;font-size:13px}
-.ok{color:#22c55e;font-weight:bold}
-.err{color:#ef4444;font-weight:bold}
-#loginBox{max-width:340px;margin:40px auto;padding:20px;background:#1e293b;border-top:4px solid #eab308;border-radius:8px;text-align:center}
-#welcomeMsg{padding:8px 15px;font-weight:bold;color:#cbd5e1}
-.hint{color:#94a3b8;font-size:12px;margin-top:8px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>АИС «Надзор» — номер дела</title>
+    <style>
+        * { box-sizing: border-box }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #0f172a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .case-number-bar {
+            width: 100%;
+            max-width: 950px;
+            height: 60px;
+            background: #0d111e;
+            border: 1px solid #eab308;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .case-number-text {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .case-date {
+            font-size: 16px;
+            color: #eab308;
+            font-weight: bold;
+        }
+
+        .controls { margin-top: 20px; display: flex; gap: 10px }
+
+        button {
+            padding: 10px 20px;
+            background: #eab308;
+            color: #0f172a;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { background: #facc15 }
+    </style>
 </head>
 <body>
 
-<div id="loginBox">
-  <h2>⚖️ АИС «Надзор»</h2>
-  <p class="muted">Прокуратура Тракторозаводского р-на</p>
-  <input type="text" id="uName" placeholder="Должность или ФИО (напр. Зинченко А.А.)">
-  <input type="password" id="uPass" placeholder="Код доступа">
-  <button type="button" class="btn" onclick="login()">Войти</button>
-  <p id="err" class="err" style="display:none;margin-top:10px">Неверные данные!</p>
-  <p class="hint">Вход по фамилии с инициалами или по должности: например, «Зинченко А.А.» или «Генеральный прокурор» + код доступа</p>
-</div>
-
-<div id="app" style="display:none">
-  <div class="nav">
-    <button type="button" class="btn" id="navBtn1" onclick="tab(1)">📄 Документ</button>
-    <button type="button" class="btn btn-g" id="navBtn2" onclick="tab(2);loadRegistry()">🗂️ Реестр дел</button>
-    <button type="button" class="btn btn-g" id="navBtn3" onclick="tab(3)">📅 Проверки</button>
-    <button type="button" class="btn btn-g" id="navBtn4" onclick="tab(4)">🚨 Розыск</button>
-    <button type="button" class="btn btn-g" id="navBtn5" onclick="tab(5)">📖 Статьи УК</button>
-    <button type="button" class="btn btn-g" id="navBtn6" onclick="tab(6)">👥 Контакты</button>
-  </div>
-
-  <div class="box">
-    <div id="welcomeMsg"></div>
-
-    <div id="p1">
-      <div class="card">
-        <h3>Новое заявление / постановление</h3>
-        <select id="dType">
-          <option value="ЗАЯВЛЕНИЕ В ПРОКУРАТУРУ">Заявление в прокуратуру</option>
-          <option value="ПОСТАНОВЛЕНИЕ о возбуждении дела">Постановление о возбуждении дела</option>
-          <option value="ОРДЕР на задержание и обыск">Ордер на задержание и обыск</option>
-        </select>
-        <input type="text" id="dNum" readonly>
-        <input type="text" id="dTarget" placeholder="Фигурант (ФИО, звание)">
-        <input type="text" id="dLaw" placeholder="Статья (напр. ст. 286 УК)">
-        <textarea id="dText" rows="4" placeholder="Суть нарушения..."></textarea>
-        <select id="dSign"></select>
-        <select id="dStatus">
-          <option value="В работе">В работе</option>
-          <option value="Выдан ордер">Выдан ордер</option>
-          <option value="Передано в суд">Передано в суд</option>
-          <option value="Закрыто">Закрыто</option>
-        </select>
-        <button type="button" class="btn" onclick="makeDoc()">Сформировать, отправить в базу</button>
-        <p>
-          <span id="sendSt" class="ok" style="display:none">Отправлено в облачную базу</span>
-          <span id="sendErr" class="err" style="display:none">Ошибка отправки</span>
-        </p>
-      </div>
-
-      <div class="card" id="bCard" style="display:none;border-color:#eab308">
-        <h3>Готовый бланк</h3>
-        <textarea id="bOut" rows="9" readonly></textarea>
-        <button type="button" class="btn btn-b" onclick="copyTxt()">Скопировать</button>
-        <span id="cOk" class="ok" style="margin-left:8px;display:none">Скопировано</span>
-      </div>
+    <div class="case-number-bar">
+        <span class="case-number-text" id="caseNumber"></span>
+        <span class="case-date" id="caseDate"></span>
     </div>
 
-    <div id="p2" style="display:none">
-      <div class="card">
-        <h3>Общая облачная база дел</h3>
-        <table>
-          <thead>
-            <tr><th>№ Дела</th><th>Фигурант</th><th>Статья</th><th>Ответственный</th><th>Статус</th><th>Суть</th><th>Дата</th></tr>
-          </thead>
-          <tbody id="tblBody">
-            <tr><td colspan="7" class="muted">Загрузка...</td></tr>
-          </tbody>
-        </table>
-        <button type="button" class="btn btn-g" style="margin-top:10px" onclick="loadRegistry()">Обновить реестр</button>
-      </div>
+    <div class="controls">
+        <button onclick="nextCaseNumber()">Новое дело — следующий номер</button>
     </div>
 
-    <div id="p3" style="display:none">
-      <div class="card">
-        <h3>График проверок госструктур</h3>
-        <table>
-          <tr><th>Организация</th><th>Дни</th><th>Проверяющий</th><th>Статус</th></tr>
-          <tr><td>Отдел полиции (МВД)</td><td>Пн, Чт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Нарушения</option></select></td></tr>
-          <tr><td>Управление ФСБ</td><td>Вт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Нарушения</option></select></td></tr>
-          <tr><td>Воинская часть</td><td>Ср, Пт</td><td>Зинченко Е.В.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Нарушения</option></select></td></tr>
-        </table>
-      </div>
-    </div>
-
-    <div id="p4" style="display:none">
-      <div class="card">
-        <h3>Розыск и ориентировки</h3>
-        <table>
-          <tr><th>ФИО</th><th>Статья</th><th>Приметы</th><th>Статус</th></tr>
-          <tr><td>Петров А.С.</td><td>ст. 286 УК</td><td>Бывший лейтенант МВД</td><td><select><option>В розыске</option><option>Задержан</option></select></td></tr>
-          <tr><td>Волков Д.И.</td><td>ст. 290 УК</td><td>Чёрный седан</td><td><select><option>В розыске</option><option>Задержан</option></select></td></tr>
-        </table>
-      </div>
-    </div>
-
-    <div id="p5" style="display:none">
-      <div class="card">
-        <h3>Памятка УК</h3>
-        <p><strong>ст. 285 УК</strong> — Злоупотребление полномочиями</p>
-        <p><strong>ст. 286 УК</strong> — Превышение полномочий</p>
-        <p><strong>ст. 290 УК</strong> — Получение взятки</p>
-        <p><strong>ст. 301 УК</strong> — Незаконное задержание</p>
-      </div>
-    </div>
-
-    <div id="p6" style="display:none">
-      <div class="card">
-        <h3>Руководство и приёмная</h3>
-        <p><strong>Адрес:</strong> Тракторозаводский р-н (ЧТЗ), пр-кт Ленина, д. 15</p>
-        <p><strong>Прокурор:</strong> Зинченко Артем Анатольевич (+7 945 342-65-73)</p>
-        <p><strong>Заместитель:</strong> Зинченко Елизавета Витальевна (+7 945 342-65-74)</p>
-        <p><strong>Часы приёма:</strong> Пн–Пт 14:00–20:00, Сб 15:00–18:00</p>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-var SHEET_URL = "https://script.google.com/macros/s/AKfycbyimsRaFpV9RtHKrRNtUwFt8BoPgainPLbC6Z-oj563xKHt53Yzcj6PyJaRQqvPw2rp/exec";
-var STATUSES = ['В работе', 'Выдан ордер', 'Передано в суд', 'Закрыто'];
-
-// Текущий пользователь
-var currentUser = null;
-
-// perms:
-//   tabs       — какие разделы видны (1 документ, 2 реестр, 3 проверки, 4 розыск, 5 статьи, 6 контакты)
-//   editStatus — может менять статус дел в реестре
-//   signAny    — может подписывать документы любой подписью (иначе — только своя)
-var STAFF = [
-  {
-    pass: "7401",
-    role: "Генеральный прокурор",
-    fio: "Зинченко Артём Анатольевич",
-    short: "Зинченко А.А.",
-    names: ["генеральный прокурор", "зинченко а.а.", "зинченко артем анатольевич", "зинченко артём анатольевич"],
-    perms: { tabs: [1, 2, 3, 4, 5, 6], editStatus: true, signAny: true }
-  },
-  {
-    pass: "7402",
-    role: "Заместитель генерального прокурора",
-    fio: "Зинченко Елизавета Витальевна",
-    short: "Зинченко Е.В.",
-    names: ["заместитель генерального прокурора", "зинченко е.в.", "зинченко елизавета витальевна"],
-    perms: { tabs: [1, 2, 3, 4, 5, 6], editStatus: true, signAny: true }
-  },
-  {
-    pass: "7403",
-    role: "Старший помощник прокурора",
-    fio: "Зинченко Василиса Витальевна",
-    short: "Зинченко В.В.",
-    names: ["старший помощник прокурора", "зинченко в.в.", "зинченко василиса витальевна"],
-    perms: { tabs: [1, 2, 3, 5, 6], editStatus: true, signAny: false }
-  }
-];
-
-// Приводим строку к единому виду: без регистра, без ё, без точек и лишних пробелов
-function norm(s) {
-  return s.toLowerCase().replace(/ё/g, 'е').replace(/\./g, '').replace(/\s+/g, ' ').trim();
-}
-
-function findStaff(nameInput, pass) {
-  var n = norm(nameInput);
-  for (var i = 0; i < STAFF.length; i++) {
-    var u = STAFF[i];
-    if (u.pass !== pass) continue;
-    for (var j = 0; j < u.names.length; j++) {
-      if (n === norm(u.names[j])) return u;
-    }
-  }
-  return null;
-}
-
-// Настраиваем интерфейс под роль
-function applyPermissions(user) {
-  for (var i = 1; i <= 6; i++) {
-    document.getElementById('navBtn' + i).style.display =
-      (user.perms.tabs.indexOf(i) !== -1) ? '' : 'none';
-  }
-
-  var sel = document.getElementById('dSign');
-  sel.innerHTML = '';
-  if (user.perms.signAny) {
-    for (var k = 0; k < STAFF.length; k++) {
-      var o = document.createElement('option');
-      o.value = STAFF[k].short;
-      o.text = STAFF[k].short + ' (' + STAFF[k].role + ')';
-      sel.add(o);
-    }
-  } else {
-    var me = document.createElement('option');
-    me.value = user.short;
-    me.text = user.short + ' (' + user.role + ')';
-    sel.add(me);
-  }
-}
-
-// Автоматически ставим подпись вошедшего сотрудника
-function selectOwnSign(user) {
-  var sel = document.getElementById('dSign');
-  for (var i = 0; i < sel.options.length; i++) {
-    if (norm(sel.options[i].value) === norm(user.short)) {
-      sel.selectedIndex = i;
-      return;
-    }
-  }
-}
-
-function login() {
-  var name = document.getElementById('uName').value;
-  var pass = document.getElementById('uPass').value.trim();
-  var user = findStaff(name, pass);
-
-  if (user) {
-    currentUser = user;
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('welcomeMsg').innerText = 'Добро пожаловать: ' + user.role + ' ' + user.fio;
-    applyPermissions(user);
-    selectOwnSign(user);
-    newCaseNumber();
-    loadRegistry();
-    tab(1);
-  } else {
-    document.getElementById('err').style.display = 'block';
-  }
-}
-
-function tab(n) {
-  for (var i = 1; i <= 6; i++) {
-    document.getElementById('p' + i).style.display = 'none';
-  }
-  document.getElementById('p' + n).style.display = 'block';
-}
-
-function newCaseNumber() {
-  var y = new Date().getFullYear();
-  var x = Math.floor(Math.random() * 89) + 10;
-  document.getElementById('dNum').value = '№ 74-' + x + '/' + y;
-}
-
-function makeDoc() {
-  var t = document.getElementById('dType').value;
-  var n = document.getElementById('dNum').value.trim();
-  var trg = document.getElementById('dTarget').value.trim();
-  var l = document.getElementById('dLaw').value.trim();
-  var txt = document.getElementById('dText').value.trim();
-  var s = document.getElementById('dSign').value;
-  var st = document.getElementById('dStatus').value;
-
-  if (!trg || !l) {
-    alert('Заполните фигуранта и статью');
-    return;
-  }
-
-  var text =
-    'ПРОКУРАТУРА ТРАКТОРОЗАВОДСКОГО РАЙОНА\n' +
-    'пр-кт Ленина, 15 (ЧТЗ) | +7 (945) 342-65-73\n' +
-    '----------------------------------------\n' +
-    t + ' ' + n + '\n' +
-    'Фигурант: ' + trg + '\n' +
-    'Статья: ' + l + '\n' +
-    'Суть: ' + txt + '\n' +
-    'Статус: ' + st + '\n' +
-    'Подписал: ' + s;
-
-  document.getElementById('bOut').value = text;
-  document.getElementById('bCard').style.display = 'block';
-  document.getElementById('sendSt').style.display = 'none';
-  document.getElementById('sendErr').style.display = 'none';
-
-  var payload = {
-    action: 'add',
-    num: n,
-    type: t,
-    target: trg,
-    law: l,
-    sign: s,
-    status: st,
-    text: txt
-  };
-
-  fetch(SHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d && d.ok) {
-        document.getElementById('sendSt').style.display = 'inline';
-        loadRegistry();
-        newCaseNumber();
-        document.getElementById('dTarget').value = '';
-        document.getElementById('dLaw').value = '';
-        document.getElementById('dText').value = '';
-      } else {
-        document.getElementById('sendErr').style.display = 'inline';
-      }
-    })
-    .catch(function () {
-      document.getElementById('sendErr').style.display = 'inline';
-    });
-}
-
-function loadRegistry() {
-  var body = document.getElementById('tblBody');
-  body.innerHTML = '<tr><td colspan="7" class="muted">Загрузка...</td></tr>';
-
-  fetch(SHEET_URL)
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      body.innerHTML = '';
-      if (!data.cases || data.cases.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="muted">База пока пуста</td></tr>';
-        return;
-      }
-      data.cases.forEach(function (c) {
-        var r = body.insertRow(-1);
-        r.insertCell(0).innerText = c.num;
-        r.insertCell(1).innerText = c.target;
-        r.insertCell(2).innerText = c.law;
-        r.insertCell(3).innerText = c.sign;
-        var sel = document.createElement('select');
-        for (var i = 0; i < STATUSES.length; i++) {
-          var o = document.createElement('option');
-          o.text = STATUSES[i];
-          if (STATUSES[i] === c.status) { o.selected = true; }
-          sel.add(o);
+    <script>
+        // Собирает номер вида "№ 74-<порядковый>/<год>"
+        function buildCaseNumber(seq) {
+            return "№ 74-" + seq + "/" + new Date().getFullYear();
         }
-        // Если в базе у дела старый статус «В суде» — показываем его как «Передано в суд»
-        if (c.status && STATUSES.indexOf(c.status) === -1) {
-          var old = document.createElement('option');
-          old.text = c.status;
-          old.selected = true;
-          sel.add(old);
-        }
-        if (currentUser && !currentUser.perms.editStatus) {
-          sel.disabled = true;
-          sel.title = 'Изменение статуса недоступно вашей роли';
-        } else {
-          sel.addEventListener('change', function () {
-            updateStatus(c.num, sel.value);
-          });
-        }
-        r.insertCell(4).appendChild(sel);
-        var tdText = r.insertCell(5);
-        tdText.innerText = c.text;
-        tdText.style.fontSize = '12px';
-        tdText.style.maxWidth = '260px';
-        r.insertCell(6).innerText = c.date;
-      });
-    })
-    .catch(function () {
-      body.innerHTML = '<tr><td colspan="7" class="err">Не удалось загрузить базу</td></tr>';
-    });
-}
 
-function updateStatus(num, status) {
-  if (!currentUser || !currentUser.perms.editStatus) {
-    alert('Ваша роль не позволяет менять статус дела');
-    return;
-  }
-  var payload = { action: 'status', num: num, status: status };
-  fetch(SHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  }).catch(function () {});
-}
+        // Ключ счётчика привязан к году — 1 января нумерация начнётся заново
+        function currentKey() {
+            return "caseCounter_" + new Date().getFullYear();
+        }
 
-function copyTxt() {
-  var a = document.getElementById('bOut');
-  a.select();
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(a.value).then(function () {
-      document.getElementById('cOk').style.display = 'inline';
-    });
-  } else {
-    document.execCommand('copy');
-    document.getElementById('cOk').style.display = 'inline';
-  }
-}
-</script>
+        // Читает текущий счётчик; если счётчика ещё нет — начинает с 19,
+        // чтобы первое созданное дело получило № 74-20
+        function readCounter() {
+            let seq = parseInt(localStorage.getItem(currentKey()), 10);
+            if (isNaN(seq)) seq = 19;
+            return seq;
+        }
+
+        // Дата в формате ДД.ММ.ГГГГ
+        function buildDate() {
+            const d = new Date();
+            const dd = String(d.getDate()).padStart(2, "0");
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            return dd + "." + mm + "." + d.getFullYear();
+        }
+
+        // При загрузке страницы показываем текущий номер (без увеличения)
+        function showCurrent() {
+            document.getElementById("caseNumber").textContent = buildCaseNumber(readCounter());
+            document.getElementById("caseDate").textContent = buildDate();
+        }
+
+        // По кнопке — увеличиваем счётчик и показываем новый номер
+        function nextCaseNumber() {
+            const seq = readCounter() + 1;
+            localStorage.setItem(currentKey(), seq);
+            document.getElementById("caseNumber").textContent = buildCaseNumber(seq);
+            document.getElementById("caseDate").textContent = buildDate();
+        }
+
+        document.addEventListener("DOMContentLoaded", showCurrent);
+    </script>
 </body>
 </html>
