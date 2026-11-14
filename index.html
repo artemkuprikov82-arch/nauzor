@@ -70,7 +70,7 @@ textarea{font-family:monospace;resize:vertical}
         <select id="dStatus">
           <option value="В работе">В работе</option>
           <option value="Выдан ордер">Выдан ордер</option>
-          <option value="В суде">В суде</option>
+          <option value="Передано в суд">Передано в суд</option>
           <option value="Закрыто">Закрыто</option>
         </select>
         <button type="button" class="btn" onclick="makeDoc()">Сформировать, отправить в базу</button>
@@ -151,7 +151,7 @@ textarea{font-family:monospace;resize:vertical}
 
 <script>
 var SHEET_URL = "https://script.google.com/macros/s/AKfycbyimsRaFpV9RtHKrRNtUwFt8BoPgainPLbC6Z-oj563xKHt53Yzcj6PyJaRQqvPw2rp/exec";
-var STATUSES = ['В работе', 'Выдан ордер', 'В суде', 'Закрыто'];
+var STATUSES = ['В работе', 'Выдан ордер', 'Передано в суд', 'Закрыто'];
 
 // Текущий пользователь
 var currentUser = null;
@@ -206,13 +206,11 @@ function findStaff(nameInput, pass) {
 
 // Настраиваем интерфейс под роль
 function applyPermissions(user) {
-  // Скрываем недоступные разделы
   for (var i = 1; i <= 6; i++) {
     document.getElementById('navBtn' + i).style.display =
       (user.perms.tabs.indexOf(i) !== -1) ? '' : 'none';
   }
 
-  // Подписи: у руководства все, у старшего помощника — только своя
   var sel = document.getElementById('dSign');
   sel.innerHTML = '';
   if (user.perms.signAny) {
@@ -362,6 +360,13 @@ function loadRegistry() {
           o.text = STATUSES[i];
           if (STATUSES[i] === c.status) { o.selected = true; }
           sel.add(o);
+        }
+        // Если в базе у дела старый статус «В суде» — показываем его как «Передано в суд»
+        if (c.status && STATUSES.indexOf(c.status) === -1) {
+          var old = document.createElement('option');
+          old.text = c.status;
+          old.selected = true;
+          sel.add(old);
         }
         if (currentUser && !currentUser.perms.editStatus) {
           sel.disabled = true;
