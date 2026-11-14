@@ -206,11 +206,13 @@ function findStaff(nameInput, pass) {
 
 // Настраиваем интерфейс под роль
 function applyPermissions(user) {
+  // Скрываем недоступные разделы
   for (var i = 1; i <= 6; i++) {
     document.getElementById('navBtn' + i).style.display =
       (user.perms.tabs.indexOf(i) !== -1) ? '' : 'none';
   }
 
+  // Подписи: у руководства все, у старшего помощника — только своя
   var sel = document.getElementById('dSign');
   sel.innerHTML = '';
   if (user.perms.signAny) {
@@ -237,12 +239,6 @@ function selectOwnSign(user) {
       return;
     }
   }
-  // если своей подписи в списке нет — добавляем и выбираем её
-  var o = document.createElement('option');
-  o.value = user.short;
-  o.text = user.short + ' (' + user.role + ')';
-  sel.appendChild(o);
-  sel.selectedIndex = sel.options.length - 1;
 }
 
 function login() {
@@ -389,6 +385,10 @@ function loadRegistry() {
 }
 
 function updateStatus(num, status) {
+  if (!currentUser || !currentUser.perms.editStatus) {
+    alert('Ваша роль не позволяет менять статус дела');
+    return;
+  }
   var payload = { action: 'status', num: num, status: status };
   fetch(SHEET_URL, {
     method: 'POST',
