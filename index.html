@@ -256,16 +256,25 @@ textarea{font-family:monospace;resize:vertical}
     <div id="p7" style="display:none">
       <div class="card">
         <h3>Принятие на собеседование</h3>
-        <p class="muted">Кандидаты, ожидающие собеседования. После «Принят» появляется кнопка оформления в штат.</p>
+        <p class="muted">Кандидаты, ожидающие собеседования. После «Принят» появляется кнопка оформления в штат. Паспортные данные заполнять не обязательно — если заполнены, при оформлении в штат переносятся в карточку сотрудника.</p>
         <div class="row2">
           <div><input type="text" id="cFio" placeholder="ФИО кандидата"></div>
           <div><input type="text" id="cPos" placeholder="Должность"></div>
           <div><input type="text" id="cExp" placeholder="Опыт"></div>
         </div>
+        <div class="row2">
+          <div><input type="text" id="cPassSer" placeholder="Серия паспорта (необязательно)" maxlength="4"></div>
+          <div><input type="text" id="cPassNum" placeholder="Номер паспорта (необязательно)" maxlength="6"></div>
+        </div>
+        <div class="row2">
+          <div><input type="text" id="cPassIss" placeholder="Кем выдан (необязательно)"></div>
+          <div><input type="text" id="cPassDate" placeholder="Дата выдачи (необязательно)"></div>
+          <div><input type="text" id="cPassCode" placeholder="Код подразделения (необязательно)"></div>
+        </div>
         <button type="button" class="btn btn-b" style="margin-bottom:12px" onclick="addCandidate()">+ Добавить кандидата</button>
         <table>
-          <thead><tr><th>ФИО</th><th>Должность</th><th>Опыт</th><th>Статус</th><th>Действие</th></tr></thead>
-          <tbody id="candBody"><tr><td colspan="5" class="muted">Загрузка...</td></tr></tbody>
+          <thead><tr><th>ФИО</th><th>Должность</th><th>Опыт</th><th>Паспорт</th><th>Кем выдан</th><th>Дата выдачи</th><th>Статус</th><th>Действие</th></tr></thead>
+          <tbody id="candBody"><tr><td colspan="8" class="muted">Загрузка...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -275,8 +284,8 @@ textarea{font-family:monospace;resize:vertical}
       <div class="card">
         <h3>Штат прокуратуры</h3>
         <table>
-          <thead><tr><th>ФИО</th><th>Должность</th><th>Отдел</th><th>Статус</th><th>Дата приёма</th></tr></thead>
-          <tbody id="staffBody"><tr><td colspan="5" class="muted">Загрузка...</td></tr></tbody>
+          <thead><tr><th>ФИО</th><th>Должность</th><th>Отдел</th><th>Статус</th><th>Дата приёма</th><th>Паспорт</th></tr></thead>
+          <tbody id="staffBody"><tr><td colspan="6" class="muted">Загрузка...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -296,7 +305,7 @@ textarea{font-family:monospace;resize:vertical}
 </div>
 
 <script>
-var SHEET_URL = "https://script.google.com/macros/s/AKfycbx8SLtSB01fDYJjdL1yS0BVN_wU8fVt0Tx0MmHRAUCM_cr92YiOLpdwqL8peNbGJT_l/exec";
+var SHEET_URL = "https://script.google.com/macros/s/AKfycby_GnW9XK09gPzV_BX_whaeDv3rCWHl6N5p574jBebja33l0L6nAsycbrq-D8A6vVjL/exec";
 
 var STATUSES = ['Зарегистрировано','В работе','Проверка','Представление внесено','Передано в суд','Отказано в удовлетворении','Закрыто'];
 var INSP_STATUSES = ['Запланирована','Проведена','Выявлены нарушения'];
@@ -710,17 +719,20 @@ function inspDel(row){
 // --- Кандидаты ---
 function loadCandidates(){
   var body=document.getElementById('candBody');
-  body.innerHTML='<tr><td colspan="5" class="muted">Загрузка...</td></tr>';
+  body.innerHTML='<tr><td colspan="8" class="muted">Загрузка...</td></tr>';
   fetch(SHEET_URL).then(r=>r.json()).then(data=>{
     body.innerHTML='';
     var cands=data.candidates||[];
-    if(cands.length===0){ body.innerHTML='<tr><td colspan="5" class="muted">Кандидатов на собеседование нет</td></tr>'; return; }
+    if(cands.length===0){ body.innerHTML='<tr><td colspan="8" class="muted">Кандидатов на собеседование нет</td></tr>'; return; }
     for(var i=0;i<cands.length;i++){
       var c=cands[i];
       var r=body.insertRow(-1);
       r.insertCell(0).innerText=c.fio;
       r.insertCell(1).innerText=c.position||'—';
       r.insertCell(2).innerText=c.experience||'—';
+      r.insertCell(3).innerText=((c.passport_series||'')+(c.passport_number?' '+c.passport_number:''))||'—';
+      r.insertCell(4).innerText=c.passport_issued_by||'—';
+      r.insertCell(5).innerText=c.passport_issue_date||'—';
       var statusSel=document.createElement('select');
       ['Ожидает','На собеседовании','Отклонён','Принят'].forEach(function(st){
         var o=document.createElement('option'); o.text=st;
@@ -730,8 +742,8 @@ function loadCandidates(){
       (function(cc){
         statusSel.addEventListener('change', function(){ updateCandidateStatus(cc.fio, statusSel.value); });
       })(c);
-      r.insertCell(3).appendChild(statusSel);
-      var ac=r.insertCell(4);
+      r.insertCell(6).appendChild(statusSel);
+      var ac=r.insertCell(7);
       if(c.status==='Принят'){
         var btn=document.createElement('button');
         btn.className='btn btn-b'; btn.innerText='Оформить в штат';
@@ -741,21 +753,37 @@ function loadCandidates(){
         ac.appendChild(btn);
       } else { ac.innerText='—'; }
     }
-  }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки кандидатов</td></tr>'; });
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="8" class="err">Ошибка загрузки кандидатов</td></tr>'; });
 }
 
 function addCandidate(){
   var fio=document.getElementById('cFio').value.trim();
   var pos=document.getElementById('cPos').value.trim();
   var exp=document.getElementById('cExp').value.trim();
+  var pSer=document.getElementById('cPassSer').value.trim();
+  var pNum=document.getElementById('cPassNum').value.trim();
+  var pIss=document.getElementById('cPassIss').value.trim();
+  var pDate=document.getElementById('cPassDate').value.trim();
+  var pCode=document.getElementById('cPassCode').value.trim();
   if(!fio||!pos){ alert('Укажите ФИО и должность'); return; }
-  post({action:'add_candidate', fio:fio, position:pos, experience:exp, status:'Ожидает'})
+  if(pSer && !/^\d{4}$/.test(pSer)){ alert('Серия паспорта должна быть 4 цифры (или оставьте поле пустым)'); return; }
+  if(pNum && !/^\d{6}$/.test(pNum)){ alert('Номер паспорта должен быть 6 цифр (или оставьте поле пустым)'); return; }
+  if(!pSer && pNum){ alert('Заполните серию паспорта или очистите номер'); return; }
+  if(pSer && !pNum){ alert('Заполните номер паспорта или очистите серию'); return; }
+  post({action:'add_candidate', fio:fio, position:pos, experience:exp, status:'Ожидает',
+    passport_series:pSer, passport_number:pNum, passport_issued_by:pIss,
+    passport_issue_date:pDate, passport_code:pCode})
     .then(r=>r.json())
     .then(d=>{
       if(d&&d.ok){
         document.getElementById('cFio').value='';
         document.getElementById('cPos').value='';
         document.getElementById('cExp').value='';
+        document.getElementById('cPassSer').value='';
+        document.getElementById('cPassNum').value='';
+        document.getElementById('cPassIss').value='';
+        document.getElementById('cPassDate').value='';
+        document.getElementById('cPassCode').value='';
         loadCandidates();
       } else { alert('Ошибка добавления'); }
     })
@@ -780,11 +808,11 @@ function hireCandidate(fio){
 // --- Штат ---
 function loadStaff(){
   var body=document.getElementById('staffBody');
-  body.innerHTML='<tr><td colspan="5" class="muted">Загрузка...</td></tr>';
+  body.innerHTML='<tr><td colspan="6" class="muted">Загрузка...</td></tr>';
   fetch(SHEET_URL).then(r=>r.json()).then(data=>{
     body.innerHTML='';
     var staff=data.staff||[];
-    if(staff.length===0){ body.innerHTML='<tr><td colspan="5" class="muted">Штат пуст</td></tr>'; return; }
+    if(staff.length===0){ body.innerHTML='<tr><td colspan="6" class="muted">Штат пуст</td></tr>'; return; }
     for(var i=0;i<staff.length;i++){
       var s=staff[i];
       var r=body.insertRow(-1);
@@ -793,8 +821,9 @@ function loadStaff(){
       r.insertCell(2).innerText=s.department||'—';
       r.insertCell(3).innerText=s.status||'Активен';
       r.insertCell(4).innerText=s.date||'—';
+      r.insertCell(5).innerText=((s.passport_series||'')+(s.passport_number?' '+s.passport_number:''))||'—';
     }
-  }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки штата</td></tr>'; });
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="6" class="err">Ошибка загрузки штата</td></tr>'; });
 }
 
 // --- Кадровый аудит ---
