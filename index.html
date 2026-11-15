@@ -15,6 +15,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#eab308}
 .btn:hover{opacity:.9}
 .btn-b{background:#3b82f6;color:#fff;width:auto}
 .btn-g{background:#334155;color:#fff;width:auto}
+.btn-r{background:#7f1d1d;color:#fff;width:auto}
 .nav{background:#1e293b;padding:10px 15px;border-bottom:2px solid #eab308;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 15px;background:#0b1120;border-bottom:1px solid #334155}
 .topbar .user{font-size:13px;color:#cbd5e1}
@@ -26,7 +27,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#eab308}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{border:1px solid #334155;padding:7px;text-align:left}
 th{background:#0f172a;color:#eab308}
-td select{margin:0;padding:3px;min-height:auto;width:auto}
+td select,td input{margin:0;padding:4px 6px;min-height:30px;font-size:12px;width:100%}
 textarea{font-family:monospace;resize:vertical}
 .muted{color:#94a3b8;font-size:13px}
 .ok{color:#22c55e;font-weight:bold}
@@ -37,6 +38,8 @@ textarea{font-family:monospace;resize:vertical}
 .hint{color:#94a3b8;font-size:12px;margin-top:8px}
 .row2{display:flex;gap:10px}
 .row2>div{flex:1}
+.row3{display:flex;gap:10px}
+.row3>div{flex:1}
 </style>
 </head>
 <body>
@@ -62,7 +65,7 @@ textarea{font-family:monospace;resize:vertical}
     <button type="button" class="btn" id="navBtn1" onclick="tab(1)">📊 Приборка</button>
     <button type="button" class="btn btn-g" id="navBtn2" onclick="tab(2)">📄 Регистрация</button>
     <button type="button" class="btn btn-g" id="navBtn3" onclick="tab(3);loadRegistry()">🗂️ Надзорные производства</button>
-    <button type="button" class="btn btn-g" id="navBtn4" onclick="tab(4)">📅 Проверки</button>
+    <button type="button" class="btn btn-g" id="navBtn4" onclick="tab(4);loadInspections()">📅 Проверки</button>
     <button type="button" class="btn btn-g" id="navBtn5" onclick="tab(5)">📖 Правовая база</button>
     <button type="button" class="btn btn-g" id="navBtn6" onclick="tab(6)">👥 Приёмная</button>
     <button type="button" class="btn btn-g" id="navBtn7" onclick="tab(7);loadCandidates()">🧑‍💼 Собеседование</button>
@@ -170,11 +173,16 @@ textarea{font-family:monospace;resize:vertical}
     <div id="p4" style="display:none">
       <div class="card">
         <h3>План проверок госорганов</h3>
+        <p class="muted">Меняйте организацию и дни прямо в таблице, выбирайте проверяющего из списка и нажимайте «Сохранить». Кнопка ✕ удаляет проверку из плана.</p>
+        <div class="row3">
+          <div><input type="text" id="nOrg" placeholder="Название организации"></div>
+          <div><input type="text" id="nDays" placeholder="Дни (напр. Пн, Чт)"></div>
+          <div><select id="nInsp"></select></div>
+        </div>
+        <button type="button" class="btn btn-b" style="margin-bottom:12px" onclick="addInsp()">+ Добавить проверку</button>
         <table>
-          <tr><th>Организация</th><th>Дни</th><th>Проверяющий</th><th>Статус</th></tr>
-          <tr><td>ОВД Тракторозаводского района</td><td>Пн, Чт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Выявлены нарушения</option></select></td></tr>
-          <tr><td>УФСБ по Челябинской области</td><td>Вт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Выявлены нарушения</option></select></td></tr>
-          <tr><td>В/ч 3472</td><td>Ср, Пт</td><td>Зинченко Е.В.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Выявлены нарушения</option></select></td></tr>
+          <thead><tr><th>Организация</th><th>Дни</th><th>Проверяющий</th><th>Статус</th><th>Действия</th></tr></thead>
+          <tbody id="inspBody"><tr><td colspan="5" class="muted">Загрузка...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -288,9 +296,15 @@ textarea{font-family:monospace;resize:vertical}
 </div>
 
 <script>
-var SHEET_URL = "https://script.google.com/macros/s/AKfycbxS1boL1BWYrknX7HeuAlahyws_qszVtxkpWmCvRqdwa2G92PtwzfqL5pDcva2j6RyQ/exec";
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbzgoYj_ITSvFgQ80-8X1BdJ18eoYkYs3PM3eAOH8W3hn8ZGy3etCz2f0e_0RmH_hVy0lg/exec";
 
 var STATUSES = ['Зарегистрировано','В работе','Проверка','Представление внесено','Передано в суд','Отказано в удовлетворении','Закрыто'];
+var INSP_STATUSES = ['Запланирована','Проведена','Выявлены нарушения'];
+var INSPECTORS = [
+  { short:'Зинченко А.А.', role:'Генеральный прокурор' },
+  { short:'Зинченко Е.В.', role:'Заместитель прокурора' },
+  { short:'Зинченко В.В.', role:'Старший помощник прокурора' }
+];
 var REVIEW_DAYS = 30;
 var currentUser = null;
 
@@ -335,6 +349,14 @@ function applyPermissions(user){
     var me=document.createElement('option');
     me.value=user.short; me.text=user.short+' ('+user.role+')';
     sel.add(me);
+  }
+  var nSel = document.getElementById('nInsp');
+  nSel.innerHTML='';
+  for(var m=0;m<INSPECTORS.length;m++){
+    var oi=document.createElement('option');
+    oi.value=INSPECTORS[m].short;
+    oi.text=INSPECTORS[m].short+' ('+INSPECTORS[m].role+')';
+    nSel.add(oi);
   }
 }
 
@@ -581,6 +603,108 @@ function loadRegistry(){
 function updateStatus(num,status){
   if(!currentUser||!currentUser.perms.editStatus){ alert('Ваша роль не позволяет менять статус'); return; }
   post({action:'status', num:num, status:status}).catch(function(){});
+}
+
+// --- Проверки ---
+function loadInspections(){
+  var body=document.getElementById('inspBody');
+  body.innerHTML='<tr><td colspan="5" class="muted">Загрузка...</td></tr>';
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    body.innerHTML='';
+    var list=data.inspections||[];
+    if(list.length===0){
+      body.innerHTML='<tr><td colspan="5" class="muted">План пуст — добавьте организацию в форму выше</td></tr>';
+      return;
+    }
+    for(var i=0;i<list.length;i++){
+      (function(ins){ body.appendChild(inspRow(ins)); })(list[i]);
+    }
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки плана проверок</td></tr>'; });
+}
+
+function inspRow(ins){
+  var r=document.createElement('tr');
+  r.dataset.id=String(ins.id||'');
+
+  var c1=r.insertCell(0);
+  var iOrg=document.createElement('input');
+  iOrg.type='text'; iOrg.value=ins.org||''; iOrg.dataset.f='org';
+  c1.appendChild(iOrg);
+
+  var c2=r.insertCell(1);
+  var iDays=document.createElement('input');
+  iDays.type='text'; iDays.value=ins.days||''; iDays.dataset.f='days';
+  c2.appendChild(iDays);
+
+  var c3=r.insertCell(2);
+  var sInsp=document.createElement('select');
+  sInsp.dataset.f='insp';
+  for(var k=0;k<INSPECTORS.length;k++){
+    var o=document.createElement('option');
+    o.value=INSPECTORS[k].short;
+    o.text=INSPECTORS[k].short+' ('+INSPECTORS[k].role+')';
+    if(INSPECTORS[k].short===(ins.inspector||'')) o.selected=true;
+    sInsp.add(o);
+  }
+  c3.appendChild(sInsp);
+
+  var c4=r.insertCell(3);
+  var sSt=document.createElement('select');
+  sSt.dataset.f='status';
+  for(var j=0;j<INSP_STATUSES.length;j++){
+    var o2=document.createElement('option');
+    o2.text=INSP_STATUSES[j];
+    if(INSP_STATUSES[j]===(ins.status||'Запланирована')) o2.selected=true;
+    sSt.add(o2);
+  }
+  c4.appendChild(sSt);
+
+  var c5=r.insertCell(4);
+  var bSave=document.createElement('button');
+  bSave.type='button'; bSave.className='btn btn-b'; bSave.innerText='Сохранить';
+  bSave.addEventListener('click', function(){ inspSave(r); });
+  c5.appendChild(bSave);
+
+  var bDel=document.createElement('button');
+  bDel.type='button'; bDel.className='btn btn-r'; bDel.innerText='✕';
+  bDel.style.marginLeft='6px';
+  bDel.addEventListener('click', function(){ inspDel(r); });
+  c5.appendChild(bDel);
+
+  return r;
+}
+
+function addInsp(){
+  var org=document.getElementById('nOrg').value.trim();
+  var days=document.getElementById('nDays').value.trim();
+  var insp=document.getElementById('nInsp').value;
+  if(!org){ alert('Укажите название организации'); return; }
+  post({action:'insp_add', org:org, days:days||'—', inspector:insp, status:'Запланирована'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d&&d.ok){
+        document.getElementById('nOrg').value='';
+        document.getElementById('nDays').value='';
+        loadInspections();
+      } else { alert('Ошибка добавления'); }
+    })
+    .catch(function(){ alert('Ошибка связи с базой'); });
+}
+
+function inspSave(row){
+  var get=function(f){ return row.querySelector('[data-f="'+f+'"]').value; };
+  post({action:'insp_update', id:row.dataset.id, org:get('org'), days:get('days'), inspector:get('insp'), status:get('status')})
+    .then(r=>r.json())
+    .then(d=>{ if(d&&d.ok){ loadInspections(); } else { alert('Ошибка сохранения'); } })
+    .catch(function(){ alert('Ошибка связи с базой'); });
+}
+
+function inspDel(row){
+  if(!confirm('Удалить эту проверку из плана?')) return;
+  post({action:'insp_del', id:row.dataset.id})
+    .then(r=>r.json())
+    .then(d=>{ if(d&&d.ok){ loadInspections(); } else { alert('Ошибка удаления'); } })
+    .catch(function(){ alert('Ошибка связи с базой'); });
 }
 
 // --- Кандидаты ---
