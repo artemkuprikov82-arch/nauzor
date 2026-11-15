@@ -71,6 +71,7 @@ textarea{font-family:monospace;resize:vertical}
     <button type="button" class="btn btn-g" id="navBtn7" onclick="tab(7);loadCandidates()">🧑‍💼 Собеседование</button>
     <button type="button" class="btn btn-g" id="navBtn8" onclick="tab(8);loadStaff()">🏅 Штат</button>
     <button type="button" class="btn btn-g" id="navBtn9" onclick="tab(9);loadAudit()">📋 Кадровый аудит</button>
+    <button type="button" class="btn btn-g" id="navBtn10" onclick="tab(10);loadLogs()">📜 Журнал</button>
   </div>
 
   <div class="box">
@@ -292,11 +293,40 @@ textarea{font-family:monospace;resize:vertical}
         </table>
       </div>
     </div>
+
+    <!-- 10. Журнал -->
+    <div id="p10" style="display:none">
+      <div class="card">
+        <h3>📜 Журнал действий</h3>
+        <p class="muted">Последние действия в системе: регистрации дел, смены статусов, кадровые операции и изменения в плане проверок. Новые записи — сверху.</p>
+        <div class="row2">
+          <div><input type="text" id="logSearch" placeholder="Поиск по журналу: дело, имя, действие..." oninput="loadLogs()"></div>
+          <div><select id="logAction" onchange="loadLogs()">
+            <option value="">Все действия</option>
+            <option>Регистрация дела</option>
+            <option>Смена статуса дела</option>
+            <option>Добавлен кандидат</option>
+            <option>Смена статуса кандидата</option>
+            <option>Оформление в штат</option>
+            <option>Смена статуса сотрудника</option>
+            <option>Добавлена проверка</option>
+            <option>Изменение проверки</option>
+            <option>Удалена проверка</option>
+            <option>Заявка из формы</option>
+          </select></div>
+        </div>
+        <table>
+          <thead><tr><th>Дата</th><th>Время</th><th>Действие</th><th>Детали</th></tr></thead>
+          <tbody id="logBody"><tr><td colspan="4" class="muted">Загрузка...</td></tr></tbody>
+        </table>
+        <button type="button" class="btn btn-g" style="margin-top:10px" onclick="loadLogs()">Обновить журнал</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-var SHEET_URL = "https://script.google.com/macros/s/AKfycbyMfDrznurc6WrrBnshQ4JzrAEEJ-iG0-FWK8IkaA9HY7CrXXRmpudUc10UjR-iu3x9/exec";
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbx8SLtSB01fDYJjdL1yS0BVN_wU8fVt0Tx0MmHRAUCM_cr92YiOLpdwqL8peNbGJT_l/exec";
 
 var STATUSES = ['Зарегистрировано','В работе','Проверка','Представление внесено','Передано в суд','Отказано в удовлетворении','Закрыто'];
 var INSP_STATUSES = ['Запланирована','Проведена','Выявлены нарушения'];
@@ -311,13 +341,13 @@ var currentUser = null;
 var STAFF = [
   { pass:"7401", role:"Генеральный прокурор", fio:"Зинченко Артём Анатольевич", short:"Зинченко А.А.",
     names:["генеральный прокурор","зинченко а.а.","зинченко артем анатольевич","зинченко артём анатольевич"],
-    perms:{ tabs:[1,2,3,4,5,6,7,8,9], editStatus:true, signAny:true, audit:true } },
+    perms:{ tabs:[1,2,3,4,5,6,7,8,9,10], editStatus:true, signAny:true, audit:true } },
   { pass:"7402", role:"Заместитель генерального прокурора", fio:"Зинченко Елизавета Витальевна", short:"Зинченко Е.В.",
     names:["заместитель генерального прокурора","зинченко е.в.","зинченко елизавета витальевна"],
-    perms:{ tabs:[1,2,3,4,5,6,7,8,9], editStatus:true, signAny:true, audit:true } },
+    perms:{ tabs:[1,2,3,4,5,6,7,8,9,10], editStatus:true, signAny:true, audit:true } },
   { pass:"7403", role:"Старший помощник прокурора", fio:"Зинченко Василиса Витальевна", short:"Зинченко В.В.",
     names:["старший помощник прокурора","зинченко в.в.","зинченко василиса витальевна"],
-    perms:{ tabs:[1,2,3,4,5,6,7,8], editStatus:true, signAny:false, audit:false } }
+    perms:{ tabs:[1,2,3,4,5,6,7,8,10], editStatus:true, signAny:false, audit:false } }
 ];
 
 function norm(s){ return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/\./g,'').replace(/\s+/g,' ').trim(); }
@@ -333,7 +363,7 @@ function findStaff(nameInput, pass){
 }
 
 function applyPermissions(user){
-  for(var i=1;i<=9;i++){
+  for(var i=1;i<=10;i++){
     var el = document.getElementById('navBtn'+i);
     if(el) el.style.display = (user.perms.tabs.indexOf(i)!==-1)?'':'none';
   }
@@ -442,7 +472,7 @@ function logout(){
 }
 
 function tab(n){
-  for(var i=1;i<=9;i++) document.getElementById('p'+i).style.display='none';
+  for(var i=1;i<=10;i++) document.getElementById('p'+i).style.display='none';
   document.getElementById('p'+n).style.display='block';
 }
 
@@ -833,6 +863,38 @@ function loadAudit(){
 
 function updateStaffStatusAudit(fio,status){
   post({action:'staff_status', fio:fio, status:status}).catch(function(){});
+}
+
+// --- Журнал ---
+function loadLogs(){
+  var body=document.getElementById('logBody');
+  body.innerHTML='<tr><td colspan="4" class="muted">Загрузка...</td></tr>';
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    body.innerHTML='';
+    var logs=(data.logs||[]).slice().reverse();
+    var q=norm(document.getElementById('logSearch').value);
+    var fa=document.getElementById('logAction').value;
+    if(q||fa){
+      logs=logs.filter(function(l){
+        var hay=norm((l['действие']||'')+' '+(l['детали']||'')+' '+(l['дата']||''));
+        return (!q || hay.indexOf(q)!==-1) && (!fa || l['действие']===fa);
+      });
+    }
+    if(logs.length===0){
+      body.innerHTML='<tr><td colspan="4" class="muted">Записей в журнале пока нет — они появятся после первого действия в системе</td></tr>';
+      return;
+    }
+    for(var i=0;i<logs.length;i++){
+      var l=logs[i];
+      var r=body.insertRow(-1);
+      r.insertCell(0).innerText=l['дата']||'—';
+      r.insertCell(1).innerText=l['время']||'—';
+      r.insertCell(2).innerText=l['действие']||'—';
+      var td=r.insertCell(3);
+      td.innerText=l['детали']||'';
+      td.style.fontSize='12px';
+    }
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="4" class="err">Ошибка загрузки журнала</td></tr>'; });
 }
 
 function copyTxt(){
