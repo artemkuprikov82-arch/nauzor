@@ -257,7 +257,7 @@ textarea{font-family:monospace;resize:vertical}
       <div class="card">
         <h3>Принятие на собеседование</h3>
         <p class="muted">Кандидаты, ожидающие собеседования. После «Принят» появляется кнопка оформления в штат. Паспортные данные заполнять не обязательно — если заполнены, при оформлении в штат переносятся в карточку сотрудника.</p>
-        <div class="row2">
+        <div class="row3">
           <div><input type="text" id="cFio" placeholder="ФИО кандидата"></div>
           <div><input type="text" id="cPos" placeholder="Должность"></div>
           <div><input type="text" id="cExp" placeholder="Опыт"></div>
@@ -266,7 +266,7 @@ textarea{font-family:monospace;resize:vertical}
           <div><input type="text" id="cPassSer" placeholder="Серия паспорта (необязательно)" maxlength="4"></div>
           <div><input type="text" id="cPassNum" placeholder="Номер паспорта (необязательно)" maxlength="6"></div>
         </div>
-        <div class="row2">
+        <div class="row3">
           <div><input type="text" id="cPassIss" placeholder="Кем выдан (необязательно)"></div>
           <div><input type="text" id="cPassDate" placeholder="Дата выдачи (необязательно)"></div>
           <div><input type="text" id="cPassCode" placeholder="Код подразделения (необязательно)"></div>
@@ -305,7 +305,8 @@ textarea{font-family:monospace;resize:vertical}
 </div>
 
 <script>
-var SHEET_URL = "https://script.google.com/macros/s/AKfycby_GnW9XK09gPzV_BX_whaeDv3rCWHl6N5p574jBebja33l0L6nAsycbrq-D8A6vVjL/exec";
+// ===== ПОДКЛЮЧЕНИЕ К БАЗЕ =====
+var SHEET_URL = "https://script.google.com/macros/s/AKfycby_mR5TxIoBnXPLaaXMdm_FTE6EMRgc7c3xadRtHBI_Bq_8BmRoo1QWQHHggw_17D-W/exec";
 
 var STATUSES = ['Зарегистрировано','В работе','Проверка','Представление внесено','Передано в суд','Отказано в удовлетворении','Закрыто'];
 var INSP_STATUSES = ['Запланирована','Проведена','Выявлены нарушения'];
@@ -317,6 +318,7 @@ var INSPECTORS = [
 var REVIEW_DAYS = 30;
 var currentUser = null;
 
+// ===== ПОЛЬЗОВАТЕЛИ И ПРАВА =====
 var STAFF = [
   { pass:"7401", role:"Генеральный прокурор", fio:"Зинченко Артём Анатольевич", short:"Зинченко А.А.",
     names:["генеральный прокурор","зинченко а.а.","зинченко артем анатольевич","зинченко артём анатольевич"],
@@ -376,6 +378,7 @@ function selectOwnSign(user){
   }
 }
 
+// ===== ДАТЫ =====
 function formatDate(d){
   var dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
   return dd+'.'+mm+'.'+d.getFullYear();
@@ -395,6 +398,7 @@ function daysLeft(deadline){
   return Math.ceil((d.getTime() - Date.now()) / 86400000);
 }
 
+// ===== НУМЕРАЦИЯ ДЕЛ =====
 function nextCaseNumberFromData(cases){
   var y = new Date().getFullYear();
   var maxNum = 0;
@@ -418,10 +422,12 @@ function newCaseNumber(){
   }).catch(()=>{ input.value = fallbackCaseNumber(); });
 }
 
+// ===== СВЯЗЬ С БАЗОЙ =====
 function post(payload){
   return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
 }
 
+// ===== ВХОД =====
 function login(){
   var name=document.getElementById('uName').value;
   var pass=document.getElementById('uPass').value.trim();
@@ -455,7 +461,7 @@ function tab(n){
   document.getElementById('p'+n).style.display='block';
 }
 
-// --- Регистрация ---
+// ===== РЕГИСТРАЦИЯ =====
 function makeDoc(){
   var t=document.getElementById('dType').value;
   var cat=document.getElementById('dCat').value;
@@ -506,7 +512,7 @@ function makeDoc(){
     .catch(()=>{ document.getElementById('sendErr').style.display='inline'; });
 }
 
-// --- Приборка ---
+// ===== ПРИБОРКА =====
 function loadDashboard(){
   var statsEl=document.getElementById('stats');
   var dash=document.getElementById('dashBody');
@@ -549,7 +555,7 @@ function loadDashboard(){
   });
 }
 
-// --- Реестр ---
+// ===== РЕЕСТР =====
 function loadRegistry(){
   var body=document.getElementById('tblBody');
   body.innerHTML='<tr><td colspan="8" class="muted">Загрузка...</td></tr>';
@@ -614,7 +620,7 @@ function updateStatus(num,status){
   post({action:'status', num:num, status:status}).catch(function(){});
 }
 
-// --- Проверки ---
+// ===== ПРОВЕРКИ =====
 function loadInspections(){
   var body=document.getElementById('inspBody');
   body.innerHTML='<tr><td colspan="5" class="muted">Загрузка...</td></tr>';
@@ -716,7 +722,7 @@ function inspDel(row){
     .catch(function(){ alert('Ошибка связи с базой'); });
 }
 
-// --- Кандидаты ---
+// ===== КАНДИДАТЫ =====
 function loadCandidates(){
   var body=document.getElementById('candBody');
   body.innerHTML='<tr><td colspan="8" class="muted">Загрузка...</td></tr>';
@@ -805,7 +811,7 @@ function hireCandidate(fio){
     .catch(function(){ alert('Ошибка связи'); });
 }
 
-// --- Штат ---
+// ===== ШТАТ =====
 function loadStaff(){
   var body=document.getElementById('staffBody');
   body.innerHTML='<tr><td colspan="6" class="muted">Загрузка...</td></tr>';
@@ -826,7 +832,7 @@ function loadStaff(){
   }).catch(()=>{ body.innerHTML='<tr><td colspan="6" class="err">Ошибка загрузки штата</td></tr>'; });
 }
 
-// --- Кадровый аудит ---
+// ===== КАДРОВЫЙ АУДИТ =====
 function loadAudit(){
   var body=document.getElementById('auditBody');
   if(!currentUser||!currentUser.perms.audit){
@@ -864,6 +870,7 @@ function updateStaffStatusAudit(fio,status){
   post({action:'staff_status', fio:fio, status:status}).catch(function(){});
 }
 
+// ===== БЛАНК =====
 function copyTxt(){
   var a=document.getElementById('bOut');
   a.select();
