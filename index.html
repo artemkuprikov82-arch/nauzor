@@ -26,7 +26,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#eab308}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{border:1px solid #334155;padding:7px;text-align:left}
 th{background:#0f172a;color:#eab308}
-td select{margin:0;padding:3px;min-height:auto}
+td select{margin:0;padding:3px;min-height:auto;width:auto}
 textarea{font-family:monospace;resize:vertical}
 .muted{color:#94a3b8;font-size:13px}
 .ok{color:#22c55e;font-weight:bold}
@@ -34,7 +34,6 @@ textarea{font-family:monospace;resize:vertical}
 .overdue{background:rgba(239,68,68,.15)}
 .soon{background:rgba(234,179,8,.12)}
 #loginBox{max-width:340px;margin:40px auto;padding:20px;background:#1e293b;border-top:4px solid #eab308;border-radius:8px;text-align:center}
-#welcomeMsg{padding:8px 15px;font-weight:bold;color:#cbd5e1}
 .hint{color:#94a3b8;font-size:12px;margin-top:8px}
 .row2{display:flex;gap:10px}
 .row2>div{flex:1}
@@ -56,7 +55,7 @@ textarea{font-family:monospace;resize:vertical}
   <div class="topbar">
     <strong>⚖️ АИС «Надзор»</strong>
     <span class="user" id="topUser"></span>
-    <button type="button" class="btn btn-g" style="width:auto;padding:5px 10px" onclick="logout()">Выйти</button>
+    <button type="button" class="btn btn-g" style="padding:5px 10px" onclick="logout()">Выйти</button>
   </div>
 
   <div class="nav">
@@ -103,15 +102,15 @@ textarea{font-family:monospace;resize:vertical}
             <label>Категория надзора</label>
             <select id="dCat">
               <option value="Обращения граждан">Обращения граждан</option>
-              <option value="Надзор за следствием">Надзор за процессуальной деятельностью следствия</option>
+              <option value="Надзор за следствием">Надзор за следствием</option>
               <option value="Надзор за исполнением законов">Надзор за исполнением законов</option>
               <option value="Административные правонарушения">Административные правонарушения</option>
             </select>
           </div>
         </div>
         <input type="text" id="dNum" readonly>
-        <input type="text" id="dTarget" placeholder="Фигурант / организация (ФИО, звание, наименование)">
-        <input type="text" id="dLaw" placeholder="Нарушенная норма (напр. ст. 286 УК, ст. 19.3 КоАП)">
+        <input type="text" id="dTarget" placeholder="Фигурант / организация">
+        <input type="text" id="dLaw" placeholder="Нарушенная норма (напр. ст. 286 УК)">
         <textarea id="dText" rows="4" placeholder="Суть нарушения / содержание обращения..."></textarea>
         <div class="row2">
           <div>
@@ -133,7 +132,7 @@ textarea{font-family:monospace;resize:vertical}
         </div>
         <button type="button" class="btn" onclick="makeDoc()">Зарегистрировать и отправить в базу</button>
         <p>
-          <span id="sendSt" class="ok" style="display:none">Производство зарегистрировано в базе</span>
+          <span id="sendSt" class="ok" style="display:none">Производство зарегистрировано</span>
           <span id="sendErr" class="err" style="display:none">Ошибка отправки</span>
         </p>
       </div>
@@ -187,9 +186,9 @@ textarea{font-family:monospace;resize:vertical}
         <p><strong>ст. 285 УК</strong> — злоупотребление должностными полномочиями</p>
         <p><strong>ст. 286 УК</strong> — превышение должностных полномочий</p>
         <p><strong>ст. 290 УК</strong> — получение взятки</p>
-        <p><strong>ст. 301 УК</strong> — незаконное задержание, заключение под стражу</p>
+        <p><strong>ст. 301 УК</strong> — незаконное задержание</p>
         <p><strong>ст. 124 УК</strong> — неоказание помощи больному</p>
-        <p class="muted">Срок рассмотрения обращения граждан — 30 дней (ФЗ-59). Протест подлежит рассмотрению в течение 10 дней (ст. 23 ФЗ «О прокуратуре РФ»).</p>
+        <p class="muted">Срок рассмотрения обращений граждан — 30 дней (ФЗ-59). Протест рассматривается в течение 10 дней (ст. 23 ФЗ «О прокуратуре РФ»).</p>
       </div>
     </div>
 
@@ -209,10 +208,16 @@ textarea{font-family:monospace;resize:vertical}
     <div id="p7" style="display:none">
       <div class="card">
         <h3>Принятие на собеседование</h3>
-        <p class="muted">Кандидаты, ожидающие собеседования. После «Принят» — кнопка оформления в штат.</p>
+        <p class="muted">Кандидаты, ожидающие собеседования. После «Принят» появляется кнопка оформления в штат.</p>
+        <div class="row2">
+          <div><input type="text" id="cFio" placeholder="ФИО кандидата"></div>
+          <div><input type="text" id="cPos" placeholder="Должность"></div>
+          <div><input type="text" id="cExp" placeholder="Опыт"></div>
+        </div>
+        <button type="button" class="btn btn-b" style="margin-bottom:12px" onclick="addCandidate()">+ Добавить кандидата</button>
         <table>
           <thead><tr><th>ФИО</th><th>Должность</th><th>Опыт</th><th>Статус</th><th>Действие</th></tr></thead>
-          <tbody id="candBody"></tbody>
+          <tbody id="candBody"><tr><td colspan="5" class="muted">Загрузка...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -223,7 +228,7 @@ textarea{font-family:monospace;resize:vertical}
         <h3>Штат прокуратуры</h3>
         <table>
           <thead><tr><th>ФИО</th><th>Должность</th><th>Отдел</th><th>Статус</th><th>Дата приёма</th></tr></thead>
-          <tbody id="staffBody"></tbody>
+          <tbody id="staffBody"><tr><td colspan="5" class="muted">Загрузка...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -232,22 +237,21 @@ textarea{font-family:monospace;resize:vertical}
     <div id="p9" style="display:none">
       <div class="card">
         <h3>Кадровый аудит</h3>
-        <p class="muted">Только прокурор и заместитель. Смена статусов сотрудников.</p>
+        <p class="muted">Доступен только прокурору и заместителю.</p>
         <table>
           <thead><tr><th>ФИО</th><th>Должность</th><th>Стаж</th><th>Взыскания</th><th>Состояние</th><th>Изменить</th></tr></thead>
-          <tbody id="auditBody"></tbody>
+          <tbody id="auditBody"><tr><td colspan="6" class="muted">Загрузка...</td></tr></tbody>
         </table>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-var SHEET_URL = "https://script.google.com/macros/s/AKfycbyimsRaFpV9RtHKrRNtUwFt8BoPgainPLbC6Z-oj563xKHt53Yzcj6PyJaRQqvPw2rp/exec";
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbxS1boL1BWYrknX7HeuAlahyws_qszVtxkpWmCvRqdwa2G92PtwzfqL5pDcva2j6RyQ/exec";
+
 var STATUSES = ['Зарегистрировано','В работе','Проверка','Представление внесено','Передано в суд','Отказано в удовлетворении','Закрыто'];
 var REVIEW_DAYS = 30;
-
 var currentUser = null;
 
 var STAFF = [
@@ -262,7 +266,7 @@ var STAFF = [
     perms:{ tabs:[1,2,3,4,5,6,7,8], editStatus:true, signAny:false, audit:false } }
 ];
 
-function norm(s){ return s.toLowerCase().replace(/ё/g,'е').replace(/\./g,'').replace(/\s+/g,' ').trim(); }
+function norm(s){ return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/\./g,'').replace(/\s+/g,' ').trim(); }
 
 function findStaff(nameInput, pass){
   var n = norm(nameInput);
@@ -320,15 +324,12 @@ function daysLeft(deadline){
   return Math.ceil((d.getTime() - Date.now()) / 86400000);
 }
 
-// Сквозной номер производства: 74-п-N/год, N = максимум в базе + 1
 function nextCaseNumberFromData(cases){
   var y = new Date().getFullYear();
   var maxNum = 0;
-  if(cases && cases.length){
-    for(var i=0;i<cases.length;i++){
-      var m = String(cases[i].num||'').match(/74-(?:\D*)?(\d+)/);
-      if(m){ var v=parseInt(m[1],10); if(v>maxNum) maxNum=v; }
-    }
+  for(var i=0;i<cases.length;i++){
+    var m = String(cases[i].num||'').match(/(\d+)/);
+    if(m){ var v = parseInt(m[1],10); if(v>maxNum) maxNum=v; }
   }
   return '№ 74-п-' + (maxNum+1) + '/' + y;
 }
@@ -342,7 +343,7 @@ function newCaseNumber(){
   var input = document.getElementById('dNum');
   input.value = '№ .../' + new Date().getFullYear();
   fetch(SHEET_URL).then(r=>r.json()).then(data=>{
-    input.value = nextCaseNumberFromData(data.cases);
+    input.value = nextCaseNumberFromData(data.cases||[]);
   }).catch(()=>{ input.value = fallbackCaseNumber(); });
 }
 
@@ -383,7 +384,7 @@ function tab(n){
   document.getElementById('p'+n).style.display='block';
 }
 
-// --- Регистрация производства ---
+// --- Регистрация ---
 function makeDoc(){
   var t=document.getElementById('dType').value;
   var cat=document.getElementById('dCat').value;
@@ -442,17 +443,15 @@ function loadDashboard(){
     var cases=data.cases||[];
     var inWork=0, court=0, closed=0, overdue=0;
     var soonRows=[];
-    cases.forEach(function(c){
-      var st=c.status;
-      if(st==='Закрыто'||st==='Отказано в удовлетворении') closed++;
-      else if(st==='Передано в суд') court++;
-      else inWork++;
+    for(var i=0;i<cases.length;i++){
+      var c=cases[i];
+      if(c.status==='Закрыто'||c.status==='Отказано в удовлетворении'){ closed++; }
+      else if(c.status==='Передано в суд'){ court++; }
+      else { inWork++; }
       var dl=daysLeft(c.deadline);
-      if(dl!==null && dl<0 && st!=='Закрыто' && st!=='Отказано в удовлетворении') overdue++;
-      if(dl!==null && dl>=0 && dl<=7 && st!=='Закрыто' && st!=='Отказано в удовлетворении'){
-        soonRows.push(c);
-      }
-    });
+      if(dl!==null && dl<0 && c.status!=='Закрыто' && c.status!=='Отказано в удовлетворении') overdue++;
+      if(dl!==null && dl>=0 && dl<=7 && c.status!=='Закрыто' && c.status!=='Отказано в удовлетворении') soonRows.push(c);
+    }
     statsEl.innerHTML =
       '<div class="stat"><div class="num">'+cases.length+'</div><div class="lbl">Всего производств</div></div>'+
       '<div class="stat"><div class="num">'+inWork+'</div><div class="lbl">В работе</div></div>'+
@@ -465,14 +464,15 @@ function loadDashboard(){
       dash.innerHTML='<tr><td colspan="5" class="muted">Дел с истекающим сроком нет</td></tr>';
       return;
     }
-    soonRows.forEach(function(c){
+    for(var j=0;j<soonRows.length;j++){
+      var c2=soonRows[j];
       var r=dash.insertRow(-1);
-      r.insertCell(0).innerText=c.num;
-      r.insertCell(1).innerText=c.target;
-      r.insertCell(2).innerText=c.cat||'—';
-      r.insertCell(3).innerText=c.deadline||'—';
-      r.insertCell(4).innerText=c.status;
-    });
+      r.insertCell(0).innerText=c2.num;
+      r.insertCell(1).innerText=c2.target;
+      r.insertCell(2).innerText=c2.cat||'—';
+      r.insertCell(3).innerText=c2.deadline||'—';
+      r.insertCell(4).innerText=c2.status;
+    }
   }).catch(()=>{
     dash.innerHTML='<tr><td colspan="5" class="err">Не удалось загрузить данные</td></tr>';
   });
@@ -494,7 +494,8 @@ function loadRegistry(){
       });
     }
     if(cases.length===0){ body.innerHTML='<tr><td colspan="8" class="muted">Дел не найдено</td></tr>'; return; }
-    cases.forEach(function(c){
+    for(var i=0;i<cases.length;i++){
+      var c=cases[i];
       var r=body.insertRow(-1);
       r.insertCell(0).innerText=c.num;
       r.insertCell(1).innerText=c.target;
@@ -502,17 +503,20 @@ function loadRegistry(){
       r.insertCell(3).innerText=c.law;
       r.insertCell(4).innerText=c.sign;
       var sel=document.createElement('select');
+      var known = STATUSES.indexOf(c.status)!==-1;
       STATUSES.forEach(function(st){
         var o=document.createElement('option'); o.text=st;
         if(st===c.status) o.selected=true;
         sel.add(o);
       });
-      if(c.status && STATUSES.indexOf(c.status)===-1){
+      if(!known && c.status){
         var old=document.createElement('option'); old.text=c.status; old.selected=true; sel.add(old);
       }
       if(currentUser && !currentUser.perms.editStatus){ sel.disabled=true; }
       else {
-        sel.addEventListener('change', function(){ updateStatus(c.num, sel.value); });
+        (function(cc){
+          sel.addEventListener('change', function(){ updateStatus(cc.num, sel.value); });
+        })(c);
       }
       r.insertCell(5).appendChild(sel);
 
@@ -530,7 +534,7 @@ function loadRegistry(){
       var td=r.insertCell(7);
       td.innerText=c.text;
       td.style.fontSize='12px'; td.style.maxWidth='240px';
-    });
+    }
   }).catch(()=>{ body.innerHTML='<tr><td colspan="8" class="err">Не удалось загрузить базу</td></tr>'; });
 }
 
@@ -547,28 +551,51 @@ function loadCandidates(){
     body.innerHTML='';
     var cands=data.candidates||[];
     if(cands.length===0){ body.innerHTML='<tr><td colspan="5" class="muted">Кандидатов на собеседование нет</td></tr>'; return; }
-    cands.forEach(function(c){
+    for(var i=0;i<cands.length;i++){
+      var c=cands[i];
       var r=body.insertRow(-1);
       r.insertCell(0).innerText=c.fio;
-      r.insertCell(1).innerText=c.position;
+      r.insertCell(1).innerText=c.position||'—';
       r.insertCell(2).innerText=c.experience||'—';
       var statusSel=document.createElement('select');
       ['Ожидает','На собеседовании','Отклонён','Принят'].forEach(function(st){
         var o=document.createElement('option'); o.text=st;
-        if(st===c.status) o.selected=true;
+        if(st===(c.status||'Ожидает')) o.selected=true;
         statusSel.add(o);
       });
-      statusSel.addEventListener('change', function(){ updateCandidateStatus(c.fio, statusSel.value); });
+      (function(cc){
+        statusSel.addEventListener('change', function(){ updateCandidateStatus(cc.fio, statusSel.value); });
+      })(c);
       r.insertCell(3).appendChild(statusSel);
       var ac=r.insertCell(4);
       if(c.status==='Принят'){
         var btn=document.createElement('button');
         btn.className='btn btn-b'; btn.innerText='Оформить в штат';
-        btn.addEventListener('click', function(){ hireCandidate(c.fio); });
+        (function(cc){
+          btn.addEventListener('click', function(){ hireCandidate(cc.fio); });
+        })(c);
         ac.appendChild(btn);
       } else { ac.innerText='—'; }
-    });
+    }
   }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки кандидатов</td></tr>'; });
+}
+
+function addCandidate(){
+  var fio=document.getElementById('cFio').value.trim();
+  var pos=document.getElementById('cPos').value.trim();
+  var exp=document.getElementById('cExp').value.trim();
+  if(!fio||!pos){ alert('Укажите ФИО и должность'); return; }
+  post({action:'add_candidate', fio:fio, position:pos, experience:exp, status:'Ожидает'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d&&d.ok){
+        document.getElementById('cFio').value='';
+        document.getElementById('cPos').value='';
+        document.getElementById('cExp').value='';
+        loadCandidates();
+      } else { alert('Ошибка добавления'); }
+    })
+    .catch(function(){ alert('Ошибка связи с базой'); });
 }
 
 function updateCandidateStatus(fio,status){
@@ -594,14 +621,15 @@ function loadStaff(){
     body.innerHTML='';
     var staff=data.staff||[];
     if(staff.length===0){ body.innerHTML='<tr><td colspan="5" class="muted">Штат пуст</td></tr>'; return; }
-    staff.forEach(function(s){
+    for(var i=0;i<staff.length;i++){
+      var s=staff[i];
       var r=body.insertRow(-1);
       r.insertCell(0).innerText=s.fio;
-      r.insertCell(1).innerText=s.position;
+      r.insertCell(1).innerText=s.position||'—';
       r.insertCell(2).innerText=s.department||'—';
       r.insertCell(3).innerText=s.status||'Активен';
       r.insertCell(4).innerText=s.date||'—';
-    });
+    }
   }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки штата</td></tr>'; });
 }
 
@@ -617,10 +645,11 @@ function loadAudit(){
     body.innerHTML='';
     var staff=data.staff||[];
     if(staff.length===0){ body.innerHTML='<tr><td colspan="6" class="muted">Нет данных для аудита</td></tr>'; return; }
-    staff.forEach(function(s){
+    for(var i=0;i<staff.length;i++){
+      var s=staff[i];
       var r=body.insertRow(-1);
       r.insertCell(0).innerText=s.fio;
-      r.insertCell(1).innerText=s.position;
+      r.insertCell(1).innerText=s.position||'—';
       r.insertCell(2).innerText=s.experience||'—';
       r.insertCell(3).innerText=s.disciplinary||'нет';
       r.insertCell(4).innerText=s.status||'Активен';
@@ -630,9 +659,11 @@ function loadAudit(){
         if(st===(s.status||'Активен')) o.selected=true;
         sel.add(o);
       });
-      sel.addEventListener('change', function(){ updateStaffStatusAudit(s.fio, sel.value); });
+      (function(cc){
+        sel.addEventListener('change', function(){ updateStaffStatusAudit(cc.fio, sel.value); });
+      })(s);
       r.insertCell(5).appendChild(sel);
-    });
+    }
   }).catch(()=>{ body.innerHTML='<tr><td colspan="6" class="err">Ошибка загрузки аудита</td></tr>'; });
 }
 
