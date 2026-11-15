@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>АИС «Надзор»</title>
+<title>АИС «Надзор» — Прокуратура Тракторозаводского р-на</title>
 <style>
 *{box-sizing:border-box}
 body{font-family:Arial,sans-serif;margin:0;background:#0f172a;color:#fff}
-.box{max-width:950px;margin:15px auto;padding:0 15px}
+.box{max-width:1000px;margin:15px auto;padding:0 15px}
 .card{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:14px}
 h2,h3{color:#eab308;margin-top:0}
 input,select,textarea{width:100%;background:#0f172a;border:1px solid #475569;color:#fff;padding:9px;border-radius:5px;font-size:14px;min-height:36px;margin:4px 0 10px;text-align:left}
@@ -15,7 +15,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#eab308}
 .btn:hover{opacity:.9}
 .btn-b{background:#3b82f6;color:#fff;width:auto}
 .btn-g{background:#334155;color:#fff;width:auto}
-.nav{background:#1e293b;padding:10px 15px;border-bottom:2px solid #eab308;display:flex;gap:6px;flex-wrap:wrap}
+.nav{background:#1e293b;padding:10px 15px;border-bottom:2px solid #eab308;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 15px;background:#0b1120;border-bottom:1px solid #334155}
+.topbar .user{font-size:13px;color:#cbd5e1}
+.statgrid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{flex:1;min-width:120px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center}
+.stat .num{font-size:26px;font-weight:bold;color:#eab308}
+.stat .lbl{font-size:12px;color:#94a3b8}
+.stat .num.red{color:#ef4444}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{border:1px solid #334155;padding:7px;text-align:left}
 th{background:#0f172a;color:#eab308}
@@ -24,125 +31,212 @@ textarea{font-family:monospace;resize:vertical}
 .muted{color:#94a3b8;font-size:13px}
 .ok{color:#22c55e;font-weight:bold}
 .err{color:#ef4444;font-weight:bold}
+.overdue{background:rgba(239,68,68,.15)}
+.soon{background:rgba(234,179,8,.12)}
 #loginBox{max-width:340px;margin:40px auto;padding:20px;background:#1e293b;border-top:4px solid #eab308;border-radius:8px;text-align:center}
 #welcomeMsg{padding:8px 15px;font-weight:bold;color:#cbd5e1}
 .hint{color:#94a3b8;font-size:12px;margin-top:8px}
+.row2{display:flex;gap:10px}
+.row2>div{flex:1}
 </style>
 </head>
 <body>
 
 <div id="loginBox">
   <h2>⚖️ АИС «Надзор»</h2>
-  <p class="muted">Прокуратура Тракторозаводского р-на</p>
+  <p class="muted">Прокуратура Тракторозаводского района г. Челябинска</p>
   <input type="text" id="uName" placeholder="Должность или ФИО (напр. Зинченко А.А.)">
   <input type="password" id="uPass" placeholder="Код доступа">
   <button type="button" class="btn" onclick="login()">Войти</button>
   <p id="err" class="err" style="display:none;margin-top:10px">Неверные данные!</p>
-  <p class="hint">Вход по фамилии с инициалами или по должности: например, «Зинченко А.А.» или «Генеральный прокурор» + код доступа</p>
+  <p class="hint">Вход по фамилии с инициалами или по должности + код доступа</p>
 </div>
 
 <div id="app" style="display:none">
+  <div class="topbar">
+    <strong>⚖️ АИС «Надзор»</strong>
+    <span class="user" id="topUser"></span>
+    <button type="button" class="btn btn-g" style="width:auto;padding:5px 10px" onclick="logout()">Выйти</button>
+  </div>
+
   <div class="nav">
-    <button type="button" class="btn" id="navBtn1" onclick="tab(1)">📄 Документ</button>
-    <button type="button" class="btn btn-g" id="navBtn2" onclick="tab(2);loadRegistry()">🗂️ Реестр дел</button>
-    <button type="button" class="btn btn-g" id="navBtn3" onclick="tab(3)">📅 Проверки</button>
-    <button type="button" class="btn btn-g" id="navBtn4" onclick="tab(4)">🚨 Розыск</button>
-    <button type="button" class="btn btn-g" id="navBtn5" onclick="tab(5)">📖 Статьи УК</button>
-    <button type="button" class="btn btn-g" id="navBtn6" onclick="tab(6)">👥 Контакты</button>
+    <button type="button" class="btn" id="navBtn1" onclick="tab(1)">📊 Приборка</button>
+    <button type="button" class="btn btn-g" id="navBtn2" onclick="tab(2)">📄 Регистрация</button>
+    <button type="button" class="btn btn-g" id="navBtn3" onclick="tab(3);loadRegistry()">🗂️ Надзорные производства</button>
+    <button type="button" class="btn btn-g" id="navBtn4" onclick="tab(4)">📅 Проверки</button>
+    <button type="button" class="btn btn-g" id="navBtn5" onclick="tab(5)">📖 Правовая база</button>
+    <button type="button" class="btn btn-g" id="navBtn6" onclick="tab(6)">👥 Приёмная</button>
+    <button type="button" class="btn btn-g" id="navBtn7" onclick="tab(7);loadCandidates()">🧑‍💼 Собеседование</button>
+    <button type="button" class="btn btn-g" id="navBtn8" onclick="tab(8);loadStaff()">🏅 Штат</button>
+    <button type="button" class="btn btn-g" id="navBtn9" onclick="tab(9);loadAudit()">📋 Кадровый аудит</button>
   </div>
 
   <div class="box">
-    <div id="welcomeMsg"></div>
-
+    <!-- 1. Приборка -->
     <div id="p1">
+      <div class="statgrid" id="stats"></div>
       <div class="card">
-        <h3>Новое заявление / постановление</h3>
-        <select id="dType">
-          <option value="ЗАЯВЛЕНИЕ В ПРОКУРАТУРУ">Заявление в прокуратуру</option>
-          <option value="ПОСТАНОВЛЕНИЕ о возбуждении дела">Постановление о возбуждении дела</option>
-          <option value="ОРДЕР на задержание и обыск">Ордер на задержание и обыск</option>
-        </select>
+        <h3>Дела с истекающим сроком (30 дней)</h3>
+        <table>
+          <thead><tr><th>№</th><th>Фигурант</th><th>Категория</th><th>Срок до</th><th>Статус</th></tr></thead>
+          <tbody id="dashBody"><tr><td colspan="5" class="muted">Загрузка...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. Регистрация -->
+    <div id="p2" style="display:none">
+      <div class="card">
+        <h3>Регистрация производства</h3>
+        <div class="row2">
+          <div>
+            <label>Тип документа</label>
+            <select id="dType">
+              <option value="ЗАЯВЛЕНИЕ (обращение гражданина)">Заявление / обращение гражданина</option>
+              <option value="ПРОТЕСТ на правовой акт">Протест на правовой акт</option>
+              <option value="ПРЕДСТАВЛЕНИЕ об устранении нарушений">Представление об устранении нарушений</option>
+              <option value="ПОСТАНОВЛЕНИЕ о возбуждении производства об АП">Постановление о возбуждении производства об АП</option>
+              <option value="ОРДЕР на проверку">Ордер на проверку</option>
+            </select>
+          </div>
+          <div>
+            <label>Категория надзора</label>
+            <select id="dCat">
+              <option value="Обращения граждан">Обращения граждан</option>
+              <option value="Надзор за следствием">Надзор за процессуальной деятельностью следствия</option>
+              <option value="Надзор за исполнением законов">Надзор за исполнением законов</option>
+              <option value="Административные правонарушения">Административные правонарушения</option>
+            </select>
+          </div>
+        </div>
         <input type="text" id="dNum" readonly>
-        <input type="text" id="dTarget" placeholder="Фигурант (ФИО, звание)">
-        <input type="text" id="dLaw" placeholder="Статья (напр. ст. 286 УК)">
-        <textarea id="dText" rows="4" placeholder="Суть нарушения..."></textarea>
-        <select id="dSign"></select>
-        <select id="dStatus">
-          <option value="В работе">В работе</option>
-          <option value="Выдан ордер">Выдан ордер</option>
-          <option value="Передано в суд">Передано в суд</option>
-          <option value="Закрыто">Закрыто</option>
-        </select>
-        <button type="button" class="btn" onclick="makeDoc()">Сформировать, отправить в базу</button>
+        <input type="text" id="dTarget" placeholder="Фигурант / организация (ФИО, звание, наименование)">
+        <input type="text" id="dLaw" placeholder="Нарушенная норма (напр. ст. 286 УК, ст. 19.3 КоАП)">
+        <textarea id="dText" rows="4" placeholder="Суть нарушения / содержание обращения..."></textarea>
+        <div class="row2">
+          <div>
+            <label>Подписал</label>
+            <select id="dSign"></select>
+          </div>
+          <div>
+            <label>Статус</label>
+            <select id="dStatus">
+              <option value="Зарегистрировано">Зарегистрировано</option>
+              <option value="В работе">В работе</option>
+              <option value="Проверка">Проверка</option>
+              <option value="Представление внесено">Представление внесено</option>
+              <option value="Передано в суд">Передано в суд</option>
+              <option value="Отказано в удовлетворении">Отказано в удовлетворении</option>
+              <option value="Закрыто">Закрыто</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="btn" onclick="makeDoc()">Зарегистрировать и отправить в базу</button>
         <p>
-          <span id="sendSt" class="ok" style="display:none">Отправлено в облачную базу</span>
+          <span id="sendSt" class="ok" style="display:none">Производство зарегистрировано в базе</span>
           <span id="sendErr" class="err" style="display:none">Ошибка отправки</span>
         </p>
       </div>
 
       <div class="card" id="bCard" style="display:none;border-color:#eab308">
         <h3>Готовый бланк</h3>
-        <textarea id="bOut" rows="9" readonly></textarea>
-        <button type="button" class="btn btn-b" onclick="copyTxt()">Скопировать</button>
+        <textarea id="bOut" rows="12" readonly></textarea>
+        <button type="button" class="btn btn-b" onclick="copyTxt()">Скопировать бланк</button>
         <span id="cOk" class="ok" style="margin-left:8px;display:none">Скопировано</span>
       </div>
     </div>
 
-    <div id="p2" style="display:none">
+    <!-- 3. Реестр -->
+    <div id="p3" style="display:none">
       <div class="card">
-        <h3>Общая облачная база дел</h3>
+        <h3>Реестр надзорных производств</h3>
+        <div class="row2">
+          <div><input type="text" id="fSearch" placeholder="Поиск: номер, фигурант, статья..." oninput="loadRegistry()"></div>
+          <div><select id="fStatus" onchange="loadRegistry()">
+            <option value="">Все статусы</option>
+            <option>Зарегистрировано</option><option>В работе</option><option>Проверка</option>
+            <option>Представление внесено</option><option>Передано в суд</option>
+            <option>Отказано в удовлетворении</option><option>Закрыто</option>
+          </select></div>
+        </div>
         <table>
-          <thead>
-            <tr><th>№ Дела</th><th>Фигурант</th><th>Статья</th><th>Ответственный</th><th>Статус</th><th>Суть</th><th>Дата</th></tr>
-          </thead>
-          <tbody id="tblBody">
-            <tr><td colspan="7" class="muted">Загрузка...</td></tr>
-          </tbody>
+          <thead><tr><th>№ Дела</th><th>Фигурант</th><th>Категория</th><th>Норма</th><th>Ответственный</th><th>Статус</th><th>Срок до</th><th>Суть</th></tr></thead>
+          <tbody id="tblBody"><tr><td colspan="8" class="muted">Загрузка...</td></tr></tbody>
         </table>
         <button type="button" class="btn btn-g" style="margin-top:10px" onclick="loadRegistry()">Обновить реестр</button>
       </div>
     </div>
 
-    <div id="p3" style="display:none">
-      <div class="card">
-        <h3>График проверок госструктур</h3>
-        <table>
-          <tr><th>Организация</th><th>Дни</th><th>Проверяющий</th><th>Статус</th></tr>
-          <tr><td>Отдел полиции (МВД)</td><td>Пн, Чт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Нарушения</option></select></td></tr>
-          <tr><td>Управление ФСБ</td><td>Вт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Нарушения</option></select></td></tr>
-          <tr><td>Воинская часть</td><td>Ср, Пт</td><td>Зинченко Е.В.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Нарушения</option></select></td></tr>
-        </table>
-      </div>
-    </div>
-
+    <!-- 4. Проверки -->
     <div id="p4" style="display:none">
       <div class="card">
-        <h3>Розыск и ориентировки</h3>
+        <h3>План проверок госорганов</h3>
         <table>
-          <tr><th>ФИО</th><th>Статья</th><th>Приметы</th><th>Статус</th></tr>
-          <tr><td>Петров А.С.</td><td>ст. 286 УК</td><td>Бывший лейтенант МВД</td><td><select><option>В розыске</option><option>Задержан</option></select></td></tr>
-          <tr><td>Волков Д.И.</td><td>ст. 290 УК</td><td>Чёрный седан</td><td><select><option>В розыске</option><option>Задержан</option></select></td></tr>
+          <tr><th>Организация</th><th>Дни</th><th>Проверяющий</th><th>Статус</th></tr>
+          <tr><td>ОВД Тракторозаводского района</td><td>Пн, Чт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Выявлены нарушения</option></select></td></tr>
+          <tr><td>УФСБ по Челябинской области</td><td>Вт</td><td>Зинченко А.А.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Выявлены нарушения</option></select></td></tr>
+          <tr><td>В/ч 3472</td><td>Ср, Пт</td><td>Зинченко Е.В.</td><td><select><option>Запланирована</option><option>Проведена</option><option>Выявлены нарушения</option></select></td></tr>
         </table>
       </div>
     </div>
 
+    <!-- 5. Правовая база -->
     <div id="p5" style="display:none">
       <div class="card">
-        <h3>Памятка УК</h3>
-        <p><strong>ст. 285 УК</strong> — Злоупотребление полномочиями</p>
-        <p><strong>ст. 286 УК</strong> — Превышение полномочий</p>
-        <p><strong>ст. 290 УК</strong> — Получение взятки</p>
-        <p><strong>ст. 301 УК</strong> — Незаконное задержание</p>
+        <h3>Памятка по надзору</h3>
+        <p><strong>ст. 285 УК</strong> — злоупотребление должностными полномочиями</p>
+        <p><strong>ст. 286 УК</strong> — превышение должностных полномочий</p>
+        <p><strong>ст. 290 УК</strong> — получение взятки</p>
+        <p><strong>ст. 301 УК</strong> — незаконное задержание, заключение под стражу</p>
+        <p><strong>ст. 124 УК</strong> — неоказание помощи больному</p>
+        <p class="muted">Срок рассмотрения обращения граждан — 30 дней (ФЗ-59). Протест подлежит рассмотрению в течение 10 дней (ст. 23 ФЗ «О прокуратуре РФ»).</p>
       </div>
     </div>
 
+    <!-- 6. Приёмная -->
     <div id="p6" style="display:none">
       <div class="card">
-        <h3>Руководство и приёмная</h3>
-        <p><strong>Адрес:</strong> Тракторозаводский р-н (ЧТЗ), пр-кт Ленина, д. 15</p>
-        <p><strong>Прокурор:</strong> Зинченко Артем Анатольевич (+7 945 342-65-73)</p>
-        <p><strong>Заместитель:</strong> Зинченко Елизавета Витальевна (+7 945 342-65-74)</p>
-        <p><strong>Часы приёма:</strong> Пн–Пт 14:00–20:00, Сб 15:00–18:00</p>
+        <h3>Приёмная и руководство</h3>
+        <p><strong>Адрес:</strong> пр-кт Ленина, д. 15 (ЧТЗ), Тракторозаводский район</p>
+        <p><strong>Прокурор района:</strong> Зинченко Артём Анатольевич, +7 945 342-65-73</p>
+        <p><strong>Заместитель:</strong> Зинченко Елизавета Витальевна, +7 945 342-65-74</p>
+        <p><strong>Старший помощник:</strong> Зинченко Василиса Витальевна</p>
+        <p><strong>Личный приём:</strong> Пн–Пт 14:00–20:00, Сб 15:00–18:00</p>
+      </div>
+    </div>
+
+    <!-- 7. Собеседование -->
+    <div id="p7" style="display:none">
+      <div class="card">
+        <h3>Принятие на собеседование</h3>
+        <p class="muted">Кандидаты, ожидающие собеседования. После «Принят» — кнопка оформления в штат.</p>
+        <table>
+          <thead><tr><th>ФИО</th><th>Должность</th><th>Опыт</th><th>Статус</th><th>Действие</th></tr></thead>
+          <tbody id="candBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8. Штат -->
+    <div id="p8" style="display:none">
+      <div class="card">
+        <h3>Штат прокуратуры</h3>
+        <table>
+          <thead><tr><th>ФИО</th><th>Должность</th><th>Отдел</th><th>Статус</th><th>Дата приёма</th></tr></thead>
+          <tbody id="staffBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9. Кадровый аудит -->
+    <div id="p9" style="display:none">
+      <div class="card">
+        <h3>Кадровый аудит</h3>
+        <p class="muted">Только прокурор и заместитель. Смена статусов сотрудников.</p>
+        <table>
+          <thead><tr><th>ФИО</th><th>Должность</th><th>Стаж</th><th>Взыскания</th><th>Состояние</th><th>Изменить</th></tr></thead>
+          <tbody id="auditBody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -151,304 +245,409 @@ textarea{font-family:monospace;resize:vertical}
 
 <script>
 var SHEET_URL = "https://script.google.com/macros/s/AKfycbyimsRaFpV9RtHKrRNtUwFt8BoPgainPLbC6Z-oj563xKHt53Yzcj6PyJaRQqvPw2rp/exec";
-var STATUSES = ['В работе', 'Выдан ордер', 'Передано в суд', 'Закрыто'];
+var STATUSES = ['Зарегистрировано','В работе','Проверка','Представление внесено','Передано в суд','Отказано в удовлетворении','Закрыто'];
+var REVIEW_DAYS = 30;
 
-// Текущий пользователь
 var currentUser = null;
 
-// perms:
-//   tabs       — какие разделы видны (1 документ, 2 реестр, 3 проверки, 4 розыск, 5 статьи, 6 контакты)
-//   editStatus — может менять статус дел в реестре
-//   signAny    — может подписывать документы любой подписью (иначе — только своя)
 var STAFF = [
-  {
-    pass: "7401",
-    role: "Генеральный прокурор",
-    fio: "Зинченко Артём Анатольевич",
-    short: "Зинченко А.А.",
-    names: ["генеральный прокурор", "зинченко а.а.", "зинченко артем анатольевич", "зинченко артём анатольевич"],
-    perms: { tabs: [1, 2, 3, 4, 5, 6], editStatus: true, signAny: true }
-  },
-  {
-    pass: "7402",
-    role: "Заместитель генерального прокурора",
-    fio: "Зинченко Елизавета Витальевна",
-    short: "Зинченко Е.В.",
-    names: ["заместитель генерального прокурора", "зинченко е.в.", "зинченко елизавета витальевна"],
-    perms: { tabs: [1, 2, 3, 4, 5, 6], editStatus: true, signAny: true }
-  },
-  {
-    pass: "7403",
-    role: "Старший помощник прокурора",
-    fio: "Зинченко Василиса Витальевна",
-    short: "Зинченко В.В.",
-    names: ["старший помощник прокурора", "зинченко в.в.", "зинченко василиса витальевна"],
-    perms: { tabs: [1, 2, 3, 5, 6], editStatus: true, signAny: false }
-  }
+  { pass:"7401", role:"Генеральный прокурор", fio:"Зинченко Артём Анатольевич", short:"Зинченко А.А.",
+    names:["генеральный прокурор","зинченко а.а.","зинченко артем анатольевич","зинченко артём анатольевич"],
+    perms:{ tabs:[1,2,3,4,5,6,7,8,9], editStatus:true, signAny:true, audit:true } },
+  { pass:"7402", role:"Заместитель генерального прокурора", fio:"Зинченко Елизавета Витальевна", short:"Зинченко Е.В.",
+    names:["заместитель генерального прокурора","зинченко е.в.","зинченко елизавета витальевна"],
+    perms:{ tabs:[1,2,3,4,5,6,7,8,9], editStatus:true, signAny:true, audit:true } },
+  { pass:"7403", role:"Старший помощник прокурора", fio:"Зинченко Василиса Витальевна", short:"Зинченко В.В.",
+    names:["старший помощник прокурора","зинченко в.в.","зинченко василиса витальевна"],
+    perms:{ tabs:[1,2,3,4,5,6,7,8], editStatus:true, signAny:false, audit:false } }
 ];
 
-// Приводим строку к единому виду: без регистра, без ё, без точек и лишних пробелов
-function norm(s) {
-  return s.toLowerCase().replace(/ё/g, 'е').replace(/\./g, '').replace(/\s+/g, ' ').trim();
-}
+function norm(s){ return s.toLowerCase().replace(/ё/g,'е').replace(/\./g,'').replace(/\s+/g,' ').trim(); }
 
-function findStaff(nameInput, pass) {
+function findStaff(nameInput, pass){
   var n = norm(nameInput);
-  for (var i = 0; i < STAFF.length; i++) {
+  for(var i=0;i<STAFF.length;i++){
     var u = STAFF[i];
-    if (u.pass !== pass) continue;
-    for (var j = 0; j < u.names.length; j++) {
-      if (n === norm(u.names[j])) return u;
-    }
+    if(u.pass !== pass) continue;
+    for(var j=0;j<u.names.length;j++){ if(n === norm(u.names[j])) return u; }
   }
   return null;
 }
 
-// Настраиваем интерфейс под роль
-function applyPermissions(user) {
-  for (var i = 1; i <= 6; i++) {
-    document.getElementById('navBtn' + i).style.display =
-      (user.perms.tabs.indexOf(i) !== -1) ? '' : 'none';
+function applyPermissions(user){
+  for(var i=1;i<=9;i++){
+    var el = document.getElementById('navBtn'+i);
+    if(el) el.style.display = (user.perms.tabs.indexOf(i)!==-1)?'':'none';
   }
-
   var sel = document.getElementById('dSign');
-  sel.innerHTML = '';
-  if (user.perms.signAny) {
-    for (var k = 0; k < STAFF.length; k++) {
-      var o = document.createElement('option');
-      o.value = STAFF[k].short;
-      o.text = STAFF[k].short + ' (' + STAFF[k].role + ')';
+  sel.innerHTML='';
+  if(user.perms.signAny){
+    for(var k=0;k<STAFF.length;k++){
+      var o=document.createElement('option');
+      o.value=STAFF[k].short; o.text=STAFF[k].short+' ('+STAFF[k].role+')';
       sel.add(o);
     }
   } else {
-    var me = document.createElement('option');
-    me.value = user.short;
-    me.text = user.short + ' (' + user.role + ')';
+    var me=document.createElement('option');
+    me.value=user.short; me.text=user.short+' ('+user.role+')';
     sel.add(me);
   }
 }
 
-// Автоматически ставим подпись вошедшего сотрудника
-function selectOwnSign(user) {
-  var sel = document.getElementById('dSign');
-  for (var i = 0; i < sel.options.length; i++) {
-    if (norm(sel.options[i].value) === norm(user.short)) {
-      sel.selectedIndex = i;
-      return;
-    }
+function selectOwnSign(user){
+  var sel=document.getElementById('dSign');
+  for(var i=0;i<sel.options.length;i++){
+    if(norm(sel.options[i].value)===norm(user.short)){ sel.selectedIndex=i; return; }
   }
 }
 
-// Сквозной номер дела: берём максимум из базы и прибавляем 1.
-// Формат: № 74-N/год. Номер одинаков для всех сотрудников.
-function nextCaseNumberFromData(cases) {
+function formatDate(d){
+  var dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
+  return dd+'.'+mm+'.'+d.getFullYear();
+}
+
+function parseDate(s){
+  if(!s) return null;
+  var p = String(s).split('.');
+  if(p.length===3) return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function daysLeft(deadline){
+  var d = parseDate(deadline);
+  if(!d) return null;
+  return Math.ceil((d.getTime() - Date.now()) / 86400000);
+}
+
+// Сквозной номер производства: 74-п-N/год, N = максимум в базе + 1
+function nextCaseNumberFromData(cases){
   var y = new Date().getFullYear();
   var maxNum = 0;
-  if (cases && cases.length) {
-    for (var i = 0; i < cases.length; i++) {
-      var m = String(cases[i].num || '').match(/74-(\d+)/);
-      if (m) {
-        var v = parseInt(m[1], 10);
-        if (v > maxNum) maxNum = v;
-      }
+  if(cases && cases.length){
+    for(var i=0;i<cases.length;i++){
+      var m = String(cases[i].num||'').match(/74-(?:\D*)?(\d+)/);
+      if(m){ var v=parseInt(m[1],10); if(v>maxNum) maxNum=v; }
     }
   }
-  return '№ 74-' + (maxNum + 1) + '/' + y;
+  return '№ 74-п-' + (maxNum+1) + '/' + y;
 }
 
-// Резервный номер, если база недоступна: на основе даты и времени — дубли почти исключены
-function fallbackCaseNumber() {
+function fallbackCaseNumber(){
   var d = new Date();
-  var y = d.getFullYear();
-  var stamp = String(d.getDate()) + String(d.getHours()) + String(d.getMinutes()) + String(d.getSeconds());
-  return '№ 74-' + stamp + '/' + y;
+  return '№ 74-п-' + String(d.getDate())+String(d.getHours())+String(d.getMinutes())+String(d.getSeconds()) + '/' + d.getFullYear();
 }
 
-// Обновляем номер дела: сначала пробуем по базе, при ошибке — резервный вариант
-function newCaseNumber() {
+function newCaseNumber(){
   var input = document.getElementById('dNum');
   input.value = '№ .../' + new Date().getFullYear();
-  fetch(SHEET_URL)
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      input.value = nextCaseNumberFromData(data.cases);
-    })
-    .catch(function () {
-      input.value = fallbackCaseNumber();
-    });
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    input.value = nextCaseNumberFromData(data.cases);
+  }).catch(()=>{ input.value = fallbackCaseNumber(); });
 }
 
-function login() {
-  var name = document.getElementById('uName').value;
-  var pass = document.getElementById('uPass').value.trim();
-  var user = findStaff(name, pass);
+function post(payload){
+  return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+}
 
-  if (user) {
-    currentUser = user;
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('welcomeMsg').innerText = 'Добро пожаловать: ' + user.role + ' ' + user.fio;
+function login(){
+  var name=document.getElementById('uName').value;
+  var pass=document.getElementById('uPass').value.trim();
+  var user=findStaff(name,pass);
+  if(user){
+    currentUser=user;
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('topUser').innerText=user.role+' — '+user.fio;
     applyPermissions(user);
     selectOwnSign(user);
     newCaseNumber();
-    loadRegistry();
+    loadDashboard();
     tab(1);
   } else {
-    document.getElementById('err').style.display = 'block';
+    document.getElementById('err').style.display='block';
   }
 }
 
-function tab(n) {
-  for (var i = 1; i <= 6; i++) {
-    document.getElementById('p' + i).style.display = 'none';
-  }
-  document.getElementById('p' + n).style.display = 'block';
+function logout(){
+  currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginBox').style.display='block';
+  document.getElementById('uName').value='';
+  document.getElementById('uPass').value='';
+  document.getElementById('err').style.display='none';
 }
 
-function makeDoc() {
-  var t = document.getElementById('dType').value;
-  var n = document.getElementById('dNum').value.trim();
-  var trg = document.getElementById('dTarget').value.trim();
-  var l = document.getElementById('dLaw').value.trim();
-  var txt = document.getElementById('dText').value.trim();
-  var s = document.getElementById('dSign').value;
-  var st = document.getElementById('dStatus').value;
+function tab(n){
+  for(var i=1;i<=9;i++) document.getElementById('p'+i).style.display='none';
+  document.getElementById('p'+n).style.display='block';
+}
 
-  if (!trg || !l) {
-    alert('Заполните фигуранта и статью');
-    return;
-  }
-  if (n.indexOf('...') !== -1) {
-    alert('Номер дела ещё не готов — подождите пару секунд и нажмите кнопку снова');
-    return;
-  }
+// --- Регистрация производства ---
+function makeDoc(){
+  var t=document.getElementById('dType').value;
+  var cat=document.getElementById('dCat').value;
+  var n=document.getElementById('dNum').value.trim();
+  var trg=document.getElementById('dTarget').value.trim();
+  var l=document.getElementById('dLaw').value.trim();
+  var txt=document.getElementById('dText').value.trim();
+  var s=document.getElementById('dSign').value;
+  var st=document.getElementById('dStatus').value;
+
+  if(!trg||!l){ alert('Заполните фигуранта и нарушенную норму'); return; }
+  if(n.indexOf('...')!==-1){ alert('Номер ещё не готов — подождите пару секунд'); return; }
+
+  var regDate=new Date();
+  var deadline=new Date(regDate.getTime()+REVIEW_DAYS*86400000);
+  var regS=formatDate(regDate), dlS=formatDate(deadline);
 
   var text =
-    'ПРОКУРАТУРА ТРАКТОРОЗАВОДСКОГО РАЙОНА\n' +
-    'пр-кт Ленина, 15 (ЧТЗ) | +7 (945) 342-65-73\n' +
-    '----------------------------------------\n' +
-    t + ' ' + n + '\n' +
-    'Фигурант: ' + trg + '\n' +
-    'Статья: ' + l + '\n' +
-    'Суть: ' + txt + '\n' +
-    'Статус: ' + st + '\n' +
-    'Подписал: ' + s;
+    'ПРОКУРАТУРА ТРАКТОРОЗАВОДСКОГО РАЙОНА г. ЧЕЛЯБИНСКА\n'+
+    'пр-кт Ленина, 15 | +7 (945) 342-65-73\n'+
+    '====================================================\n'+
+    t+' '+n+'\n'+
+    'Категория надзора: '+cat+'\n'+
+    'Дата регистрации: '+regS+'\n'+
+    'Срок рассмотрения (до): '+dlS+' ('+REVIEW_DAYS+' дней, ФЗ-59)\n'+
+    'Фигурант/организация: '+trg+'\n'+
+    'Нарушенная норма: '+l+'\n'+
+    'Суть: '+txt+'\n'+
+    'Статус: '+st+'\n'+
+    'Исполнитель (подписал): '+s;
 
-  document.getElementById('bOut').value = text;
-  document.getElementById('bCard').style.display = 'block';
-  document.getElementById('sendSt').style.display = 'none';
-  document.getElementById('sendErr').style.display = 'none';
+  document.getElementById('bOut').value=text;
+  document.getElementById('bCard').style.display='block';
+  document.getElementById('sendSt').style.display='none';
+  document.getElementById('sendErr').style.display='none';
 
-  var payload = {
-    action: 'add',
-    num: n,
-    type: t,
-    target: trg,
-    law: l,
-    sign: s,
-    status: st,
-    text: txt
-  };
-
-  fetch(SHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d && d.ok) {
-        document.getElementById('sendSt').style.display = 'inline';
-        loadRegistry();
-        newCaseNumber();
-        document.getElementById('dTarget').value = '';
-        document.getElementById('dLaw').value = '';
-        document.getElementById('dText').value = '';
-      } else {
-        document.getElementById('sendErr').style.display = 'inline';
-      }
+  post({action:'add', num:n, type:t, cat:cat, target:trg, law:l, sign:s, status:st, text:txt, date:regS, deadline:dlS})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d&&d.ok){
+        document.getElementById('sendSt').style.display='inline';
+        loadRegistry(); loadDashboard(); newCaseNumber();
+        document.getElementById('dTarget').value='';
+        document.getElementById('dLaw').value='';
+        document.getElementById('dText').value='';
+      } else { document.getElementById('sendErr').style.display='inline'; }
     })
-    .catch(function () {
-      document.getElementById('sendErr').style.display = 'inline';
-    });
+    .catch(()=>{ document.getElementById('sendErr').style.display='inline'; });
 }
 
-function loadRegistry() {
-  var body = document.getElementById('tblBody');
-  body.innerHTML = '<tr><td colspan="7" class="muted">Загрузка...</td></tr>';
-
-  fetch(SHEET_URL)
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      body.innerHTML = '';
-      if (!data.cases || data.cases.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="muted">База пока пуста</td></tr>';
-        return;
+// --- Приборка ---
+function loadDashboard(){
+  var statsEl=document.getElementById('stats');
+  var dash=document.getElementById('dashBody');
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    var cases=data.cases||[];
+    var inWork=0, court=0, closed=0, overdue=0;
+    var soonRows=[];
+    cases.forEach(function(c){
+      var st=c.status;
+      if(st==='Закрыто'||st==='Отказано в удовлетворении') closed++;
+      else if(st==='Передано в суд') court++;
+      else inWork++;
+      var dl=daysLeft(c.deadline);
+      if(dl!==null && dl<0 && st!=='Закрыто' && st!=='Отказано в удовлетворении') overdue++;
+      if(dl!==null && dl>=0 && dl<=7 && st!=='Закрыто' && st!=='Отказано в удовлетворении'){
+        soonRows.push(c);
       }
-      data.cases.forEach(function (c) {
-        var r = body.insertRow(-1);
-        r.insertCell(0).innerText = c.num;
-        r.insertCell(1).innerText = c.target;
-        r.insertCell(2).innerText = c.law;
-        r.insertCell(3).innerText = c.sign;
-        var sel = document.createElement('select');
-        for (var i = 0; i < STATUSES.length; i++) {
-          var o = document.createElement('option');
-          o.text = STATUSES[i];
-          if (STATUSES[i] === c.status) { o.selected = true; }
-          sel.add(o);
-        }
-        // Если в базе у дела старый статус «В суде» — показываем его как есть
-        if (c.status && STATUSES.indexOf(c.status) === -1) {
-          var old = document.createElement('option');
-          old.text = c.status;
-          old.selected = true;
-          sel.add(old);
-        }
-        if (currentUser && !currentUser.perms.editStatus) {
-          sel.disabled = true;
-          sel.title = 'Изменение статуса недоступно вашей роли';
-        } else {
-          sel.addEventListener('change', function () {
-            updateStatus(c.num, sel.value);
-          });
-        }
-        r.insertCell(4).appendChild(sel);
-        var tdText = r.insertCell(5);
-        tdText.innerText = c.text;
-        tdText.style.fontSize = '12px';
-        tdText.style.maxWidth = '260px';
-        r.insertCell(6).innerText = c.date;
+    });
+    statsEl.innerHTML =
+      '<div class="stat"><div class="num">'+cases.length+'</div><div class="lbl">Всего производств</div></div>'+
+      '<div class="stat"><div class="num">'+inWork+'</div><div class="lbl">В работе</div></div>'+
+      '<div class="stat"><div class="num">'+court+'</div><div class="lbl">Передано в суд</div></div>'+
+      '<div class="stat"><div class="num">'+closed+'</div><div class="lbl">Закрыто / отказано</div></div>'+
+      '<div class="stat"><div class="num red">'+overdue+'</div><div class="lbl">Просрочено</div></div>';
+
+    dash.innerHTML='';
+    if(soonRows.length===0){
+      dash.innerHTML='<tr><td colspan="5" class="muted">Дел с истекающим сроком нет</td></tr>';
+      return;
+    }
+    soonRows.forEach(function(c){
+      var r=dash.insertRow(-1);
+      r.insertCell(0).innerText=c.num;
+      r.insertCell(1).innerText=c.target;
+      r.insertCell(2).innerText=c.cat||'—';
+      r.insertCell(3).innerText=c.deadline||'—';
+      r.insertCell(4).innerText=c.status;
+    });
+  }).catch(()=>{
+    dash.innerHTML='<tr><td colspan="5" class="err">Не удалось загрузить данные</td></tr>';
+  });
+}
+
+// --- Реестр ---
+function loadRegistry(){
+  var body=document.getElementById('tblBody');
+  body.innerHTML='<tr><td colspan="8" class="muted">Загрузка...</td></tr>';
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    body.innerHTML='';
+    var cases=data.cases||[];
+    var q=norm(document.getElementById('fSearch').value);
+    var fs=document.getElementById('fStatus').value;
+    if(q||fs){
+      cases=cases.filter(function(c){
+        var hay=norm((c.num||'')+' '+(c.target||'')+' '+(c.law||'')+' '+(c.text||''));
+        return (!q || hay.indexOf(q)!==-1) && (!fs || c.status===fs);
       });
-    })
-    .catch(function () {
-      body.innerHTML = '<tr><td colspan="7" class="err">Не удалось загрузить базу</td></tr>';
+    }
+    if(cases.length===0){ body.innerHTML='<tr><td colspan="8" class="muted">Дел не найдено</td></tr>'; return; }
+    cases.forEach(function(c){
+      var r=body.insertRow(-1);
+      r.insertCell(0).innerText=c.num;
+      r.insertCell(1).innerText=c.target;
+      r.insertCell(2).innerText=c.cat||'—';
+      r.insertCell(3).innerText=c.law;
+      r.insertCell(4).innerText=c.sign;
+      var sel=document.createElement('select');
+      STATUSES.forEach(function(st){
+        var o=document.createElement('option'); o.text=st;
+        if(st===c.status) o.selected=true;
+        sel.add(o);
+      });
+      if(c.status && STATUSES.indexOf(c.status)===-1){
+        var old=document.createElement('option'); old.text=c.status; old.selected=true; sel.add(old);
+      }
+      if(currentUser && !currentUser.perms.editStatus){ sel.disabled=true; }
+      else {
+        sel.addEventListener('change', function(){ updateStatus(c.num, sel.value); });
+      }
+      r.insertCell(5).appendChild(sel);
+
+      var dlCell=r.insertCell(6);
+      dlCell.innerText=c.deadline||'—';
+      var dl=daysLeft(c.deadline);
+      if(dl!==null){
+        if(dl<0 && c.status!=='Закрыто' && c.status!=='Отказано в удовлетворении'){
+          r.className='overdue'; dlCell.innerText=dlCell.innerText+' (просрочено на '+Math.abs(dl)+' дн.)';
+        } else if(dl<=7 && c.status!=='Закрыто' && c.status!=='Отказано в удовлетворении'){
+          r.className='soon'; dlCell.innerText=dlCell.innerText+' (осталось '+dl+' дн.)';
+        }
+      }
+
+      var td=r.insertCell(7);
+      td.innerText=c.text;
+      td.style.fontSize='12px'; td.style.maxWidth='240px';
     });
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="8" class="err">Не удалось загрузить базу</td></tr>'; });
 }
 
-function updateStatus(num, status) {
-  if (!currentUser || !currentUser.perms.editStatus) {
-    alert('Ваша роль не позволяет менять статус дела');
+function updateStatus(num,status){
+  if(!currentUser||!currentUser.perms.editStatus){ alert('Ваша роль не позволяет менять статус'); return; }
+  post({action:'status', num:num, status:status}).catch(function(){});
+}
+
+// --- Кандидаты ---
+function loadCandidates(){
+  var body=document.getElementById('candBody');
+  body.innerHTML='<tr><td colspan="5" class="muted">Загрузка...</td></tr>';
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    body.innerHTML='';
+    var cands=data.candidates||[];
+    if(cands.length===0){ body.innerHTML='<tr><td colspan="5" class="muted">Кандидатов на собеседование нет</td></tr>'; return; }
+    cands.forEach(function(c){
+      var r=body.insertRow(-1);
+      r.insertCell(0).innerText=c.fio;
+      r.insertCell(1).innerText=c.position;
+      r.insertCell(2).innerText=c.experience||'—';
+      var statusSel=document.createElement('select');
+      ['Ожидает','На собеседовании','Отклонён','Принят'].forEach(function(st){
+        var o=document.createElement('option'); o.text=st;
+        if(st===c.status) o.selected=true;
+        statusSel.add(o);
+      });
+      statusSel.addEventListener('change', function(){ updateCandidateStatus(c.fio, statusSel.value); });
+      r.insertCell(3).appendChild(statusSel);
+      var ac=r.insertCell(4);
+      if(c.status==='Принят'){
+        var btn=document.createElement('button');
+        btn.className='btn btn-b'; btn.innerText='Оформить в штат';
+        btn.addEventListener('click', function(){ hireCandidate(c.fio); });
+        ac.appendChild(btn);
+      } else { ac.innerText='—'; }
+    });
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки кандидатов</td></tr>'; });
+}
+
+function updateCandidateStatus(fio,status){
+  post({action:'cand_status', fio:fio, status:status}).catch(function(){});
+}
+
+function hireCandidate(fio){
+  if(!confirm('Оформить кандидата '+fio+' в штат?')) return;
+  post({action:'hire', fio:fio})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d&&d.ok){ alert('Кандидат оформлен в штат'); loadCandidates(); loadStaff(); }
+      else alert('Ошибка оформления');
+    })
+    .catch(function(){ alert('Ошибка связи'); });
+}
+
+// --- Штат ---
+function loadStaff(){
+  var body=document.getElementById('staffBody');
+  body.innerHTML='<tr><td colspan="5" class="muted">Загрузка...</td></tr>';
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    body.innerHTML='';
+    var staff=data.staff||[];
+    if(staff.length===0){ body.innerHTML='<tr><td colspan="5" class="muted">Штат пуст</td></tr>'; return; }
+    staff.forEach(function(s){
+      var r=body.insertRow(-1);
+      r.insertCell(0).innerText=s.fio;
+      r.insertCell(1).innerText=s.position;
+      r.insertCell(2).innerText=s.department||'—';
+      r.insertCell(3).innerText=s.status||'Активен';
+      r.insertCell(4).innerText=s.date||'—';
+    });
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="5" class="err">Ошибка загрузки штата</td></tr>'; });
+}
+
+// --- Кадровый аудит ---
+function loadAudit(){
+  var body=document.getElementById('auditBody');
+  if(!currentUser||!currentUser.perms.audit){
+    body.innerHTML='<tr><td colspan="6" class="err">Доступ запрещён: требуется роль прокурора или заместителя</td></tr>';
     return;
   }
-  var payload = { action: 'status', num: num, status: status };
-  fetch(SHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  }).catch(function () {});
+  body.innerHTML='<tr><td colspan="6" class="muted">Загрузка...</td></tr>';
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    body.innerHTML='';
+    var staff=data.staff||[];
+    if(staff.length===0){ body.innerHTML='<tr><td colspan="6" class="muted">Нет данных для аудита</td></tr>'; return; }
+    staff.forEach(function(s){
+      var r=body.insertRow(-1);
+      r.insertCell(0).innerText=s.fio;
+      r.insertCell(1).innerText=s.position;
+      r.insertCell(2).innerText=s.experience||'—';
+      r.insertCell(3).innerText=s.disciplinary||'нет';
+      r.insertCell(4).innerText=s.status||'Активен';
+      var sel=document.createElement('select');
+      ['Активен','В отпуске','На больничном','В командировке','Уволен'].forEach(function(st){
+        var o=document.createElement('option'); o.text=st;
+        if(st===(s.status||'Активен')) o.selected=true;
+        sel.add(o);
+      });
+      sel.addEventListener('change', function(){ updateStaffStatusAudit(s.fio, sel.value); });
+      r.insertCell(5).appendChild(sel);
+    });
+  }).catch(()=>{ body.innerHTML='<tr><td colspan="6" class="err">Ошибка загрузки аудита</td></tr>'; });
 }
 
-function copyTxt() {
-  var a = document.getElementById('bOut');
+function updateStaffStatusAudit(fio,status){
+  post({action:'staff_status', fio:fio, status:status}).catch(function(){});
+}
+
+function copyTxt(){
+  var a=document.getElementById('bOut');
   a.select();
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(a.value).then(function () {
-      document.getElementById('cOk').style.display = 'inline';
-    });
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(a.value).then(function(){ document.getElementById('cOk').style.display='inline'; });
   } else {
     document.execCommand('copy');
-    document.getElementById('cOk').style.display = 'inline';
+    document.getElementById('cOk').style.display='inline';
   }
 }
 </script>
